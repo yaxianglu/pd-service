@@ -6,11 +6,11 @@ const resetDatabase = process.env.RESET_DATABASE === 'true';
 
 export const databaseConfig: TypeOrmModuleOptions = {
   type: 'mysql',
-  host: process.env.DATABASE_HOST || 'localhost',
-  port: parseInt(process.env.DATABASE_PORT) || 3306,
-  username: process.env.DATABASE_USERNAME || 'root',
-  password: process.env.DATABASE_PASSWORD || 'Shein@123',
-  database: process.env.DATABASE_NAME || 'pd',
+  host: 'pd-db-new.cgbiaakssebs.us-east-1.rds.amazonaws.com',
+  port: 3306,
+  username: 'henrycao',
+  password: 'Pearl#89$Hc!',
+  database: 'pd',
   entities: [__dirname + '/../**/*.entity{.ts,.js}'],
   synchronize: isDevelopment && resetDatabase, // 仅在开发环境且需要重置时启用
   dropSchema: isDevelopment && resetDatabase, // 仅在开发环境且需要重置时启用
