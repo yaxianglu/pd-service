@@ -6,14 +6,15 @@ const resetDatabase = process.env.RESET_DATABASE === 'true';
 
 export const databaseConfig: TypeOrmModuleOptions = {
   type: 'mysql',
-  host: 'localhost',
-  port: 3306,
-  username: 'root',
-  password: 'Shein@123',
-  database: 'pd',
+  host: process.env.DATABASE_HOST || 'localhost',
+  port: parseInt(process.env.DATABASE_PORT) || 3306,
+  username: process.env.DATABASE_USERNAME || 'root',
+  password: process.env.DATABASE_PASSWORD || 'Shein@123',
+  database: process.env.DATABASE_NAME || 'pd',
   entities: [__dirname + '/../**/*.entity{.ts,.js}'],
   synchronize: isDevelopment && resetDatabase, // 仅在开发环境且需要重置时启用
   dropSchema: isDevelopment && resetDatabase, // 仅在开发环境且需要重置时启用
   logging: true,
   charset: 'utf8mb4',
 }; 
+
