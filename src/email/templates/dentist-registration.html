@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>牙医注册申请确认 - PD Dental Services</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+            margin-bottom: 10px;
+        }
+        .title {
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        .content {
+            margin-bottom: 30px;
+        }
+        .info-box {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border-left: 4px solid #007bff;
+        }
+        .application-id {
+            background-color: #e3f2fd;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-weight: bold;
+            color: #1976d2;
+        }
+        .status {
+            display: inline-block;
+            padding: 5px 15px;
+            background-color: #ff9800;
+            color: white;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            color: #666;
+            font-size: 14px;
+        }
+        .contact-info {
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">PD Dental Services</div>
+            <h1 class="title">牙医注册申请确认</h1>
+        </div>
+        
+        <div class="content">
+            <p>尊敬的 {{fullName}} 医生，</p>
+            
+            <p>感谢您提交牙医注册申请！我们已收到您的申请信息，正在审核中。</p>
+            
+            <div class="info-box">
+                <h3>申请信息</h3>
+                <p><strong>申请人：</strong>{{fullName}}</p>
+                <p><strong>诊所名称：</strong>{{clinicName}}</p>
+                <p><strong>联系电话：</strong>{{phone}}</p>
+                <p><strong>申请状态：</strong><span class="status">审核中</span></p>
+                <p><strong>申请编号：</strong><span class="application-id">{{applicationId}}</span></p>
+            </div>
+            
+            <h3>审核流程</h3>
+            <ol>
+                <li><strong>申请提交</strong> - 您的申请已成功提交</li>
+                <li><strong>资料审核</strong> - 我们的团队将审核您的申请资料</li>
+                <li><strong>资质验证</strong> - 验证您的专业资质和执业许可</li>
+                <li><strong>现场考察</strong> - 安排现场考察（如需要）</li>
+                <li><strong>最终确认</strong> - 审核通过后发送确认通知</li>
+            </ol>
+            
+            <p><strong>预计审核时间：</strong>3-5个工作日</p>
+            
+            <div class="contact-info">
+                <h4>联系我们</h4>
+                <p>如果您在审核过程中有任何问题，请随时联系我们：</p>
+                <ul>
+                    <li>📞 客服热线：+886 2 1234 5678</li>
+                    <li>📧 邮箱：partnership@pd-dental.com</li>
+                    <li>🌐 网站：www.pd-dental.com</li>
+                    <li>⏰ 工作时间：周一至周五 9:00-18:00</li>
+                </ul>
+            </div>
+            
+            <p>我们将在审核完成后立即通知您结果。感谢您对PD Dental Services的信任！</p>
+        </div>
+        
+        <div class="footer">
+            <p>此邮件由PD Dental Services系统自动发送，请勿回复。</p>
+            <p>申请编号：{{applicationId}}</p>
+            <p>&copy; 2024 PD Dental Services. 保留所有权利。</p>
+        </div>
+    </div>
+</body>
+</html> 

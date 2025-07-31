@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>欢迎加入PD Dental Services</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+            margin-bottom: 10px;
+        }
+        .title {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 20px;
+        }
+        .content {
+            margin-bottom: 30px;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            color: #666;
+            font-size: 14px;
+        }
+        .highlight {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">PD Dental Services</div>
+            <h1 class="title">欢迎加入我们！</h1>
+        </div>
+        
+        <div class="content">
+            <p>亲爱的 {{name}}，</p>
+            
+            <p>欢迎您加入PD Dental Services！我们很高兴您选择我们作为您的牙科服务合作伙伴。</p>
+            
+            {{#if clinicName}}
+            <div class="highlight">
+                <strong>诊所信息：</strong><br>
+                诊所名称：{{clinicName}}
+            </div>
+            {{/if}}
+            
+            <p>作为我们的合作伙伴，您将享受到以下服务：</p>
+            <ul>
+                <li>专业的牙科设备和技术支持</li>
+                <li>全面的患者管理系统</li>
+                <li>24/7客户服务支持</li>
+                <li>定期的培训和更新</li>
+                <li>灵活的支付解决方案</li>
+            </ul>
+            
+            <p>我们的团队将尽快与您联系，安排后续的合作事宜。</p>
+            
+            <p>如果您有任何问题，请随时联系我们：</p>
+            <ul>
+                <li>电话：+886 2 1234 5678</li>
+                <li>邮箱：support@pd-dental.com</li>
+                <li>在线客服：www.pd-dental.com</li>
+            </ul>
+        </div>
+        
+        <div style="text-align: center;">
+            <a href="https://www.pd-dental.com" class="button">访问我们的网站</a>
+        </div>
+        
+        <div class="footer">
+            <p>此邮件由PD Dental Services系统自动发送，请勿回复。</p>
+            <p>如果您没有注册我们的服务，请忽略此邮件。</p>
+            <p>&copy; 2024 PD Dental Services. 保留所有权利。</p>
+        </div>
+    </div>
+</body>
+</html> 
