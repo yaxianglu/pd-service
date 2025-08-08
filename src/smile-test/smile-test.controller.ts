@@ -8,28 +8,61 @@ export class SmileTestController {
   @Get('uuid/:uuid')
   async getSmileTestByUuid(@Param('uuid') uuid: string) {
     try {
-      const result = await this.smileTestService.findByUuid(uuid);
-      if (!result) {
+      const smileTest = await this.smileTestService.findByUuid(uuid);
+      
+      if (!smileTest) {
         return {
-          success: true,
-          data: null,
-          message: 'No data found for this UUID'
+          success: false,
+          message: 'UUID不存在或已失效'
         };
       }
+
       return {
         success: true,
-        data: result,
-        message: 'Data retrieved successfully'
+        data: smileTest,
+        message: '获取数据成功'
       };
     } catch (error) {
-      throw new HttpException(
-        {
+      console.error('获取smile test失败:', error);
+      return {
+        success: false,
+        message: '获取数据失败',
+        error: error.message
+      };
+    }
+  }
+
+  @Get('validate-uuid/:uuid')
+  async validateUuid(@Param('uuid') uuid: string) {
+    try {
+      const smileTest = await this.smileTestService.findByUuid(uuid);
+      
+      if (!smileTest) {
+        return {
           success: false,
-          message: 'Failed to retrieve data',
-          error: error.message
+          message: 'UUID不存在或已失效'
+        };
+      }
+
+      // 只返回基本信息，不包含敏感数据
+      return {
+        success: true,
+        data: {
+          uuid: smileTest.uuid,
+          test_id: smileTest.test_id,
+          full_name: smileTest.full_name,
+          test_status: smileTest.test_status,
+          created_at: smileTest.created_at
         },
-        HttpStatus.INTERNAL_SERVER_ERROR
-      );
+        message: 'UUID验证成功'
+      };
+    } catch (error) {
+      console.error('验证UUID失败:', error);
+      return {
+        success: false,
+        message: '验证失败',
+        error: error.message
+      };
     }
   }
 
