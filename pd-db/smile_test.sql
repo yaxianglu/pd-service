@@ -24,11 +24,11 @@ CREATE TABLE `pd`.smile_test (
     considerations TEXT NULL COMMENT '考量',
     improvement_points TEXT NULL COMMENT '改进点文本',
     
-    -- 牙齿图片
-    teeth_image_1 VARCHAR(500) NULL COMMENT '牙齿图片1路径',
-    teeth_image_2 VARCHAR(500) NULL COMMENT '牙齿图片2路径',
-    teeth_image_3 VARCHAR(500) NULL COMMENT '牙齿图片3路径',
-    teeth_image_4 VARCHAR(500) NULL COMMENT '牙齿图片4路径',
+    -- 牙齿图片 (base64编码)
+    teeth_image_1 LONGTEXT NULL COMMENT '牙齿图片1路径 (base64编码)',
+    teeth_image_2 LONGTEXT NULL COMMENT '牙齿图片2路径 (base64编码)',
+    teeth_image_3 LONGTEXT NULL COMMENT '牙齿图片3路径 (base64编码)',
+    teeth_image_4 LONGTEXT NULL COMMENT '牙齿图片4路径 (base64编码)',
     
     -- 备用字段
     age INT NULL COMMENT '年龄',
