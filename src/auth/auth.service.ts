@@ -238,11 +238,22 @@ export class AuthService {
   }
 
   private async verifyPassword(plainPassword: string, hashedPassword: string): Promise<boolean> {
+    console.log('Password verification:', {
+      inputPassword: plainPassword.substring(0, 20) + '...',
+      storedPassword: hashedPassword.substring(0, 20) + '...',
+      inputLength: plainPassword.length,
+      storedLength: hashedPassword.length
+    });
+
     // 如果密码是明文存储的（开发环境），直接比较
     if (hashedPassword.startsWith('hashed_')) {
       const hash = hashedPassword.replace('hashed_', '');
       // 前端已经发送了哈希值，直接比较
-      console.log('Comparing hashes:', { inputHash: plainPassword, storedHash: hash, match: plainPassword === hash });
+      console.log('Comparing hashes:', { 
+        inputHash: plainPassword.substring(0, 20) + '...', 
+        storedHash: hash.substring(0, 20) + '...', 
+        match: plainPassword === hash 
+      });
       return plainPassword === hash;
     }
     
