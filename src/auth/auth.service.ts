@@ -41,25 +41,43 @@ export class AuthService {
   ) {}
 
   async validateUser(username: string, password: string): Promise<AdminUser> {
+    console.log('=== 开始验证用户 ===');
+    console.log('用户名:', username);
+    console.log('密码长度:', password.length);
+    
     const user = await this.adminUserRepository.findOne({
       where: { username, is_deleted: false }
     });
 
     if (!user) {
+      console.log('用户不存在');
       throw new UnauthorizedException('用戶名或密碼錯誤');
     }
 
+    console.log('找到用户:', {
+      id: user.id,
+      username: user.username,
+      status: user.status,
+      passwordLength: user.password.length,
+      passwordPrefix: user.password.substring(0, 10) + '...'
+    });
+
     if (user.status !== AdminUserStatus.ACTIVE) {
+      console.log('用户状态不是active:', user.status);
       throw new UnauthorizedException('帳戶已被停用');
     }
 
     // 检查账户是否被锁定
     if (user.locked_until && user.locked_until > new Date()) {
+      console.log('账户被锁定');
       throw new UnauthorizedException('帳戶已被鎖定，請稍後再試');
     }
 
     // 验证密码
+    console.log('开始验证密码...');
     const isPasswordValid = await this.verifyPassword(password, user.password);
+    console.log('密码验证结果:', isPasswordValid);
+    
     if (!isPasswordValid) {
       // 增加登录失败次数
       await this.incrementLoginAttempts(user);
@@ -68,6 +86,7 @@ export class AuthService {
 
     // 登录成功，重置登录失败次数
     await this.resetLoginAttempts(user);
+    console.log('=== 用户验证成功 ===');
     
     return user;
   }
@@ -222,7 +241,9 @@ export class AuthService {
     // 如果密码是明文存储的（开发环境），直接比较
     if (hashedPassword.startsWith('hashed_')) {
       const hash = hashedPassword.replace('hashed_', '');
-      return hash === this.simpleHash(plainPassword);
+      // 前端已经发送了哈希值，直接比较
+      console.log('Comparing hashes:', { inputHash: plainPassword, storedHash: hash, match: plainPassword === hash });
+      return plainPassword === hash;
     }
     
     // 使用bcrypt验证密码
