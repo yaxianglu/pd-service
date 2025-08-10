@@ -48,6 +48,12 @@ export interface SmileTestWithRelations {
   clinic: Clinic | null;
 }
 
+interface DoctorIdentifier {
+  uuid?: string;
+  email?: string;
+  username?: string;
+}
+
 @Injectable()
 export class SmileTestService {
   constructor(
@@ -199,5 +205,57 @@ export class SmileTestService {
     existing.deleted_at = new Date();
     await this.smileTestRepository.save(existing);
     return true;
+  }
+
+  // 通过医生信息查询该医生的所有患者及其最新微笑测试
+  async findByDoctorWithPatients(identifier: DoctorIdentifier): Promise<SmileTestWithRelations[]> {
+    // 定位医生
+    let doctor: AdminUser | null = null;
+    if (identifier.uuid) {
+      doctor = await this.adminUserRepository.findOne({ where: { uuid: identifier.uuid, is_deleted: 0, role: 'doctor' } });
+    } else if (identifier.email) {
+      doctor = await this.adminUserRepository.findOne({ where: { email: identifier.email, is_deleted: 0, role: 'doctor' } });
+    } else if (identifier.username) {
+      doctor = await this.adminUserRepository.findOne({ where: { username: identifier.username, is_deleted: 0, role: 'doctor' } });
+    }
+
+    if (!doctor || !doctor.uuid) {
+      return [];
+    }
+
+    // 该医生关联的诊所（可选）
+    let clinic: Clinic | null = null;
+    try {
+      if ((doctor as any).department) {
+        clinic = await this.clinicRepository.findOne({ where: { uuid: (doctor as any).department, is_deleted: 0 } });
+      }
+    } catch (e) {
+      clinic = null;
+    }
+
+    // 查询所有关联患者
+    const patients = await this.patientRepository.find({ where: { assigned_doctor_uuid: doctor.uuid as string, is_deleted: 0 } });
+
+    const results: SmileTestWithRelations[] = [];
+
+    for (const patient of patients) {
+      let smileTest: SmileTest | null = null;
+      if (patient.uuid) {
+        // 找该患者最新的一条微笑测试（按创建时间倒序）
+        smileTest = await this.smileTestRepository.findOne({
+          where: { patient_uuid: patient.uuid as string, is_deleted: 0 },
+          order: { created_at: 'DESC' as any },
+        });
+      }
+
+      results.push({
+        smileTest: smileTest as any,
+        patient,
+        doctor,
+        clinic,
+      });
+    }
+
+    return results;
   }
 } 
