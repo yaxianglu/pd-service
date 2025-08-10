@@ -1,10 +1,17 @@
 import { Controller, Post, Get, Body, UseGuards, Request, HttpCode, HttpStatus } from '@nestjs/common';
 import { AuthService, LoginDto } from './auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { AdminUser } from '../entities/admin-user.entity';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    @InjectRepository(AdminUser)
+    private adminUserRepository: Repository<AdminUser>,
+  ) {}
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
@@ -41,5 +48,17 @@ export class AuthController {
         user: req.user,
       },
     };
+  }
+
+  // 获取所有医生用户（去除敏感字段）
+  @Get('doctors')
+  @UseGuards(JwtAuthGuard)
+  async listDoctors() {
+    const users = await this.adminUserRepository.find({ where: { role: 'doctor', is_deleted: 0 } });
+    const sanitized = users.map((u) => {
+      const { password, token, refresh_token, token_expires_at, refresh_token_expires_at, ...rest } = u as any;
+      return rest;
+    });
+    return { success: true, data: sanitized };
   }
 } 
