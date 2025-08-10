@@ -211,6 +211,7 @@ export class SmileTestService {
   async createWithPatient(payload: {
     full_name: string;
     birth_date?: string | null;
+    gender?: string | null;
     phone?: string | null;
     email?: string | null;
     line_id?: string | null;
@@ -229,6 +230,7 @@ export class SmileTestService {
       const patientEntity = patientRepo.create({
         full_name: data.full_name,
         birth_date: (data.birth_date as any) || null,
+        gender: (data.gender as any) || null,
         phone: data.phone || null,
         email: data.email || null,
         line_id: data.line_id || null,
@@ -247,6 +249,7 @@ export class SmileTestService {
       const smileEntity = smileRepo.create({
         full_name: data.full_name,
         birth_date: (data.birth_date as any) || null,
+        gender: (data.gender as any) || null,
         phone: data.phone || null,
         email: data.email || null,
         line_id: data.line_id || null,
