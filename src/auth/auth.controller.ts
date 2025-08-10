@@ -1,9 +1,10 @@
-import { Controller, Post, Get, Body, UseGuards, Request, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Get, Body, UseGuards, Request, HttpCode, HttpStatus, BadRequestException } from '@nestjs/common';
 import { AuthService, LoginDto } from './auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AdminUser } from '../entities/admin-user.entity';
+import { Clinic } from '../entities/clinic.entity';
 
 @Controller('auth')
 export class AuthController {
@@ -11,6 +12,8 @@ export class AuthController {
     private authService: AuthService,
     @InjectRepository(AdminUser)
     private adminUserRepository: Repository<AdminUser>,
+    @InjectRepository(Clinic)
+    private clinicRepository: Repository<Clinic>,
   ) {}
 
   @Post('login')
@@ -60,5 +63,57 @@ export class AuthController {
       return rest;
     });
     return { success: true, data: sanitized };
+  }
+
+  // 获取诊所列表（去除已删除）
+  @Get('clinics')
+  @UseGuards(JwtAuthGuard)
+  async listClinics() {
+    const clinics = await this.clinicRepository.find({ where: { is_deleted: 0 } as any });
+    return { success: true, data: clinics };
+  }
+
+  // 创建管理员用户（默认创建医生账号，并可绑定诊所）
+  @Post('users')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  async createAdminUser(@Body() body: any) {
+    const { username, password, email, phone, full_name, role = 'doctor', department } = body || {};
+    if (!username || !password) {
+      throw new BadRequestException('缺少必要字段：username 或 password');
+    }
+
+    // 唯一性校验
+    const existing = await this.adminUserRepository.findOne({ where: { username } });
+    if (existing && (existing as any).is_deleted === 0) {
+      throw new BadRequestException('用戶名已存在');
+    }
+
+    // 如果有诊所，检查诊所是否存在
+    if (department) {
+      const clinic = await this.clinicRepository.findOne({ where: { uuid: department, is_deleted: 0 } as any });
+      if (!clinic) {
+        throw new BadRequestException('診所不存在或已被刪除');
+      }
+    }
+
+    // 存储规则：沿用登录逻辑，若前端发送 SHA-256 字符串，则以 'hashed_' 前缀保存
+    const storedPassword = password.length === 64 ? `hashed_${password}` : password;
+
+    const user = this.adminUserRepository.create({
+      username,
+      password: storedPassword,
+      email: email || null,
+      phone: phone || null,
+      full_name: full_name || null,
+      role,
+      status: 'active',
+      department: department || null,
+      is_deleted: 0 as any,
+    } as any);
+
+    const saved = await this.adminUserRepository.save(user);
+    const { password: _, token, refresh_token, token_expires_at, refresh_token_expires_at, ...safe } = saved as any;
+    return { success: true, data: safe, message: '創建成功' };
   }
 } 
