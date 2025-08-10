@@ -7,18 +7,18 @@
     - doctor：医生
     - admin：普通管理员
 
-- clinics：诊所信息
+- clinics: 诊所信息
 
-- dentist_info：合作夥伴注册表
+- dentist_info: 合作夥伴注册表
 
-- files：文件
+- files: 文件
 
-- patients：就诊者 和 治疗方案
+- patients: 就诊者 和 治疗方案
   - 绑定医生
   - 绑定微笑测试
 
-- regions：地区表
+- regions: 地区表
 
-- smile_test：微笑测试表
+- smile_test: 微笑测试表
 
 
