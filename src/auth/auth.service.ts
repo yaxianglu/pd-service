@@ -46,7 +46,7 @@ export class AuthService {
     console.log('密码长度:', password.length);
     
     const user = await this.adminUserRepository.findOne({
-      where: { username, is_deleted: false }
+      where: { username, is_deleted: 0 }
     });
 
     if (!user) {
@@ -139,7 +139,7 @@ export class AuthService {
       });
 
       const user = await this.adminUserRepository.findOne({
-        where: { id: payload.sub, is_deleted: false }
+        where: { id: payload.sub, is_deleted: 0 }
       });
 
       if (!user || user.refresh_token !== refreshToken) {
@@ -199,7 +199,7 @@ export class AuthService {
 
   async getUserProfile(userId: number) {
     const user = await this.adminUserRepository.findOne({
-      where: { id: userId, is_deleted: false },
+      where: { id: userId, is_deleted: 0 },
       select: [
         'id', 'user_id', 'username', 'email', 'full_name', 'phone',
         'role', 'department', 'position', 'status', 'avatar', 'bio',

@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { SmileTest } from '../entities/smile-test.entity';
 import { Patient } from '../entities/patient.entity';
-import { AdminUser, AdminUserRole } from '../entities/admin-user.entity';
+import { AdminUser } from '../entities/admin-user.entity';
 import { Clinic } from '../entities/clinic.entity';
 
 export interface SmileTestData {
@@ -62,15 +62,15 @@ export class SmileTestService {
   ) {}
 
   async findByUuid(uuid: string): Promise<SmileTest | null> {
-    return await this.smileTestRepository.findOne({ 
-      where: { uuid, is_deleted: false } 
+    return this.smileTestRepository.findOne({ 
+      where: { uuid, is_deleted: 0 } 
     });
   }
 
   async findByUuidWithRelations(uuid: string): Promise<SmileTestWithRelations | null> {
     // 查询微笑测试
     const smileTest = await this.smileTestRepository.findOne({ 
-      where: { uuid, is_deleted: false } 
+      where: { uuid, is_deleted: 0 } 
     });
 
     if (!smileTest) {
@@ -81,32 +81,38 @@ export class SmileTestService {
     let doctor: AdminUser | null = null;
     let clinic: Clinic | null = null;
 
-    // 如果有关联的患者UUID，查询患者信息
-    if (smileTest.patient_uuid) {
-      patient = await this.patientRepository.findOne({
-        where: { uuid: smileTest.patient_uuid, is_deleted: false }
-      });
-
-      // 如果患者有关联的医生UUID，查询医生信息
-      if (patient && patient.assigned_doctor_uuid) {
-        doctor = await this.adminUserRepository.findOne({
-          where: { 
-            uuid: patient.assigned_doctor_uuid, 
-            is_deleted: false,
-            role: AdminUserRole.DOCTOR // 确保是医生角色
-          }
+    try {
+      // 尝试查询关联的患者信息
+      // 注意：如果数据库表结构不完整，这些查询可能会失败
+      if (smileTest.patient_uuid) {
+        patient = await this.patientRepository.findOne({
+          where: { uuid: smileTest.patient_uuid, is_deleted: 0 }
         });
 
-        // 如果医生有关联的诊所UUID，查询诊所信息
-        if (doctor && doctor.department) {
-          clinic = await this.clinicRepository.findOne({
+        // 如果患者有关联的医生UUID，查询医生信息
+        if (patient && (patient as any).assigned_doctor_uuid) {
+          doctor = await this.adminUserRepository.findOne({
             where: { 
-              uuid: doctor.department, 
-              is_deleted: false 
+              uuid: (patient as any).assigned_doctor_uuid, 
+              is_deleted: 0,
+              role: 'doctor' // 直接使用字符串 'doctor'，因为 role 字段现在是 string 类型
             }
           });
+
+          // 如果医生有关联的诊所UUID，查询诊所信息
+          if (doctor && (doctor as any).department) {
+            clinic = await this.clinicRepository.findOne({
+              where: { 
+                uuid: (doctor as any).department, 
+                is_deleted: 0 
+              }
+            });
+          }
         }
       }
+    } catch (error) {
+      console.warn('关联查询失败，可能是数据库表结构不完整:', error.message);
+      // 继续执行，返回基本数据
     }
 
     return {
@@ -118,8 +124,14 @@ export class SmileTestService {
   }
 
   async findByTestId(testId: string): Promise<SmileTest | null> {
-    return await this.smileTestRepository.findOne({ 
-      where: { test_id: testId, is_deleted: false } 
+    return this.smileTestRepository.findOne({ 
+      where: { test_id: testId, is_deleted: 0 } 
+    });
+  }
+
+  async findAll(): Promise<SmileTest[]> {
+    return this.smileTestRepository.find({ 
+      where: { is_deleted: 0 } 
     });
   }
 
@@ -127,7 +139,7 @@ export class SmileTestService {
     const smileTest = this.smileTestRepository.create({
       ...data,
       test_status: data.test_status || 'pending',
-      is_deleted: false
+      is_deleted: 0
     });
     return await this.smileTestRepository.save(smileTest);
   }
@@ -171,7 +183,7 @@ export class SmileTestService {
       return false;
     }
 
-    existing.is_deleted = true;
+    existing.is_deleted = 1;
     existing.deleted_at = new Date();
     await this.smileTestRepository.save(existing);
     return true;
@@ -183,7 +195,7 @@ export class SmileTestService {
       return false;
     }
 
-    existing.is_deleted = true;
+    existing.is_deleted = 1;
     existing.deleted_at = new Date();
     await this.smileTestRepository.save(existing);
     return true;

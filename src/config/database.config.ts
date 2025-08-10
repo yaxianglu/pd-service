@@ -19,4 +19,13 @@ export const databaseConfig: TypeOrmModuleOptions = {
   dropSchema: isDevelopment && resetDatabase, // 仅在开发环境且需要重置时启用
   logging: true,
   charset: 'utf8mb4',
+  // 添加以下配置来确保字段映射正确
+  entitySkipConstructor: false,
+  // 强制重新加载实体
+  autoLoadEntities: true,
+  // 确保字段名称映射正确
+  namingStrategy: {
+    column: 'snake_case',
+    table: 'snake_case'
+  }
 };

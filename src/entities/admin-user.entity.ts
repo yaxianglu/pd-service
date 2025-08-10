@@ -22,22 +22,22 @@ export class AdminUser {
   id: number;
 
   @Column({ type: 'varchar', length: 50, nullable: true, unique: true })
-  @Index('IDX_admin_users_user_id')
+  @Index('idx_user_id')
   user_id: string | null;
 
   @Column({ type: 'char', length: 36, nullable: true, unique: true })
-  @Index('IDX_admin_users_uuid')
+  @Index('idx_uuid')
   uuid: string | null;
 
   @Column({ type: 'varchar', length: 50, unique: true })
-  @Index('IDX_admin_users_username')
+  @Index('idx_username')
   username: string;
 
   @Column({ type: 'varchar', length: 255 })
   password: string;
 
   @Column({ type: 'varchar', length: 100, nullable: true })
-  @Index('IDX_admin_users_email')
+  @Index('idx_email')
   email: string | null;
 
   @Column({ type: 'varchar', length: 100, nullable: true })
@@ -59,7 +59,7 @@ export class AdminUser {
   refresh_token_expires_at: Date | null;
 
   @Column({ type: 'timestamp', nullable: true })
-  @Index('IDX_admin_users_last_login_at')
+  @Index('idx_last_login_at')
   last_login_at: Date | null;
 
   @Column({ type: 'int', nullable: true, default: 0 })
@@ -69,35 +69,35 @@ export class AdminUser {
   locked_until: Date | null;
 
   @Column({ 
-    type: 'enum', 
-    enum: AdminUserRole, 
+    type: 'varchar', 
+    length: 255, 
     nullable: true, 
-    default: AdminUserRole.OPERATOR 
+    default: 'operator' 
   })
-  @Index('IDX_admin_users_role')
-  role: AdminUserRole;
+  @Index('idx_role')
+  role: string; // 改为 string 类型，与 SQL 的 VARCHAR(255) 对齐
 
   @Column({ type: 'text', nullable: true })
   permissions: string | null;
 
   @Column({ type: 'varchar', length: 100, nullable: true })
-  @Index('IDX_admin_users_department')
-  department: string | null; // 对于医生角色，此字段存储关联的诊所UUID
+  @Index('idx_department')
+  department: string | null;
 
   @Column({ type: 'varchar', length: 100, nullable: true })
   position: string | null;
 
   @Column({ 
-    type: 'enum', 
-    enum: AdminUserStatus, 
+    type: 'varchar', 
+    length: 20, 
     nullable: true, 
-    default: AdminUserStatus.ACTIVE 
+    default: 'active' 
   })
-  @Index('IDX_admin_users_status')
-  status: AdminUserStatus;
+  @Index('idx_status')
+  status: string; // 改为 string 类型，与 SQL 的 ENUM 对齐
 
-  @Column({ type: 'boolean', nullable: true, default: false })
-  is_verified: boolean | null;
+  @Column({ type: 'tinyint', nullable: true, default: 0 })
+  is_verified: number | null; // 改为 number 类型，与 SQL 的 TINYINT(1) 对齐
 
   @Column({ type: 'timestamp', nullable: true })
   verified_at: Date | null;
@@ -121,7 +121,7 @@ export class AdminUser {
   notification_settings: string | null;
 
   @CreateDateColumn({ type: 'timestamp', nullable: true })
-  @Index('IDX_admin_users_created_at')
+  @Index('idx_created_at')
   created_at: Date | null;
 
   @UpdateDateColumn({ type: 'timestamp', nullable: true })
@@ -133,9 +133,9 @@ export class AdminUser {
   @Column({ type: 'varchar', length: 100, nullable: true })
   updated_by: string | null;
 
-  @Column({ type: 'boolean', nullable: true, default: false })
-  @Index('IDX_admin_users_is_deleted')
-  is_deleted: boolean | null;
+  @Column({ type: 'tinyint', nullable: true, default: 0 })
+  @Index('idx_is_deleted')
+  is_deleted: number | null; // 改为 number 类型，与 SQL 的 TINYINT(1) 对齐
 
   @Column({ type: 'timestamp', nullable: true })
   deleted_at: Date | null;

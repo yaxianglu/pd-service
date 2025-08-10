@@ -230,9 +230,9 @@ export class Clinic {
   @Column({ type: 'varchar', length: 100, nullable: true })
   updated_by: string | null;
 
-  @Column({ type: 'boolean', nullable: true, default: false })
-  @Index('IDX_clinics_is_deleted')
-  is_deleted: boolean | null;
+  @Column({ type: 'tinyint', nullable: true, default: 0 })
+  @Index('idx_clinics_is_deleted')
+  is_deleted: number | null;
 
   @Column({ type: 'timestamp', nullable: true })
   deleted_at: Date | null;

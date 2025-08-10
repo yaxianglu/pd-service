@@ -48,16 +48,16 @@ export class SmileTest {
   @Column('text', { nullable: true })
   improvement_points: string;
 
-  @Column('varchar', { length: 500, nullable: true })
+  @Column('longtext', { nullable: true })
   teeth_image_1: string;
 
-  @Column('varchar', { length: 500, nullable: true })
+  @Column('longtext', { nullable: true })
   teeth_image_2: string;
 
-  @Column('varchar', { length: 500, nullable: true })
+  @Column('longtext', { nullable: true })
   teeth_image_3: string;
 
-  @Column('varchar', { length: 500, nullable: true })
+  @Column('longtext', { nullable: true })
   teeth_image_4: string;
 
   @Column('int', { nullable: true })
@@ -134,9 +134,9 @@ export class SmileTest {
   @Column('varchar', { length: 100, nullable: true })
   updated_by: string;
 
-  @Column('boolean', { default: false })
+  @Column('tinyint', { default: 0 })
   @Index()
-  is_deleted: boolean;
+  is_deleted: number;
 
   @Column('timestamp', { nullable: true })
   deleted_at: Date;

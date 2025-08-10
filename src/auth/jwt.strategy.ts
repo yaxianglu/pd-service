@@ -20,7 +20,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   async validate(payload: any) {
     const user = await this.adminUserRepository.findOne({
-      where: { id: payload.sub, is_deleted: false }
+      where: { id: payload.sub, is_deleted: 0 }
     });
 
     if (!user) {
