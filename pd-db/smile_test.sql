@@ -55,6 +55,9 @@ CREATE TABLE `pd`.smile_test (
     appointment_date DATETIME NULL COMMENT '预约日期',
     follow_up_date DATETIME NULL COMMENT '跟进日期',
     
+    -- 关联字段
+    patient_uuid CHAR(36) NULL COMMENT '关联的患者UUID',
+    
     -- 系统字段
     created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
@@ -74,7 +77,8 @@ CREATE TABLE `pd`.smile_test (
     INDEX idx_test_status (test_status),
     INDEX idx_created_at (created_at),
     INDEX idx_appointment_date (appointment_date),
-    INDEX idx_is_deleted (is_deleted)
+    INDEX idx_is_deleted (is_deleted),
+    INDEX idx_patient_uuid (patient_uuid)
 ) COMMENT='微笑测试数据库表';
 
 -- 创建序列表用于生成test_id

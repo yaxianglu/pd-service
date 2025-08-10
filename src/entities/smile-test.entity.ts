@@ -117,6 +117,10 @@ export class SmileTest {
   @Column('datetime', { nullable: true })
   follow_up_date: Date;
 
+  @Column('char', { length: 36, nullable: true })
+  @Index()
+  patient_uuid: string;
+
   @CreateDateColumn()
   @Index()
   created_at: Date;

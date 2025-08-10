@@ -79,7 +79,7 @@ export class AdminUser {
 
   @Column({ type: 'varchar', length: 100, nullable: true })
   @Index('IDX_admin_users_department')
-  department: string | null;
+  department: string | null; // 对于医生角色，此字段存储关联的诊所UUID
 
   @Column({ type: 'varchar', length: 100, nullable: true })
   position: string | null;

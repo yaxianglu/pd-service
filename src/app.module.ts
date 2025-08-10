@@ -7,6 +7,7 @@ import { DentistInfo } from './entities/dentist-info.entity';
 import { PaymentRecord } from './entities/payment-record.entity';
 import { AdminUser } from './entities/admin-user.entity';
 import { SmileTest } from './entities/smile-test.entity';
+import { Clinic } from './entities/clinic.entity';
 import { PaypalModule } from './paypal/paypal.module';
 import { EmailModule } from './email/email.module';
 import { PdfModule } from './pdf/pdf.module';
@@ -17,7 +18,7 @@ import { SmileTestModule } from './smile-test/smile-test.module';
 @Module({
   imports: [
     TypeOrmModule.forRoot(databaseConfig),
-    TypeOrmModule.forFeature([DentistInfo, PaymentRecord, AdminUser, SmileTest]),
+    TypeOrmModule.forFeature([DentistInfo, PaymentRecord, AdminUser, SmileTest, Clinic]),
     PaypalModule,
     EmailModule,
     PdfModule,

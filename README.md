@@ -14,11 +14,15 @@
 - files: 文件
 
 - patients: 就诊者 和 治疗方案
-  - 绑定医生
-  - 绑定微笑测试
+  - assigned_doctor_uuid: 绑定admin_users中role为doctor的医生uuid
 
 - regions: 地区表
 
 - smile_test: 微笑测试表
+  - patient_uuid: 指向patients表的uuid
+
+表关联关系：
+1. smile_test.patient_uuid → patients.uuid
+2. patients.assigned_doctor_uuid → admin_users.uuid (role = 'doctor')
 
 

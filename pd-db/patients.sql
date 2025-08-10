@@ -37,7 +37,7 @@ CREATE TABLE `pd`.patients (
     
     -- 就诊信息
     clinic_id VARCHAR(50) NULL COMMENT '所属诊所ID',
-    assigned_doctor_id VARCHAR(50) NULL COMMENT '主治医师ID',
+    assigned_doctor_uuid CHAR(36) NULL COMMENT '主治医师UUID（关联admin_users表）',
     receptionist_id VARCHAR(50) NULL COMMENT '接待员ID',
     referral_source VARCHAR(100) NULL COMMENT '推荐来源',
     first_visit_date DATE NULL COMMENT '首次就诊日期',
@@ -114,7 +114,7 @@ CREATE TABLE `pd`.patients (
     INDEX idx_phone (phone),
     INDEX idx_email (email),
     INDEX idx_clinic_id (clinic_id),
-    INDEX idx_assigned_doctor_id (assigned_doctor_id),
+    INDEX idx_assigned_doctor_uuid (assigned_doctor_uuid),
     INDEX idx_receptionist_id (receptionist_id),
     INDEX idx_treatment_status (treatment_status),
     INDEX idx_payment_status (payment_status),
@@ -180,7 +180,7 @@ INSERT INTO `pd`.patients (
     email,
     city,
     clinic_id,
-    assigned_doctor_id,
+    assigned_doctor_uuid,
     receptionist_id,
     treatment_status,
     selected_treatment_plan,
@@ -191,10 +191,10 @@ INSERT INTO `pd`.patients (
     status,
     is_verified
 ) VALUES 
-('陈小明', '1995-03-15', 'male', '0912345678', 'chen@example.com', '台北市', 'CL20241201000001', 'AU20241201000001', 'AU20241201000003', 'treatment_in_progress', '["牙齿矫正", "美白治疗"]', 50000.00, 25000.00, 'partial_paid', 'installment', 'active', 1),
-('林美玲', '1988-07-22', 'female', '0923456789', 'lin@example.com', '高雄市', 'CL20241201000002', 'AU20241201000002', 'AU20241201000003', 'treatment_completed', '["植牙手术"]', 80000.00, 80000.00, 'paid', 'credit_card', 'active', 1),
-('王大卫', '1990-11-08', 'male', '0934567890', 'wang@example.com', '台中市', 'CL20241201000003', 'AU20241201000001', 'AU20241201000003', 'initial_consultation', '["根管治疗"]', 15000.00, 0.00, 'unpaid', 'cash', 'active', 1),
-('张雅婷', '1992-05-30', 'female', '0945678901', 'zhang@example.com', '新竹市', 'CL20241201000004', 'AU20241201000002', 'AU20241201000003', 'treatment_planning', '["隐形矫正"]', 120000.00, 30000.00, 'partial_paid', 'bank_transfer', 'active', 1);
+('陈小明', '1995-03-15', 'male', '0912345678', 'chen@example.com', '台北市', 'CL20241201000001', '550e8400-e29b-41d4-a716-446655440001', '550e8400-e29b-41d4-a716-446655440003', 'treatment_in_progress', '["牙齿矫正", "美白治疗"]', 50000.00, 25000.00, 'partial_paid', 'installment', 'active', 1),
+('林美玲', '1988-07-22', 'female', '0923456789', 'lin@example.com', '高雄市', 'CL20241201000002', '550e8400-e29b-41d4-a716-446655440002', '550e8400-e29b-41d4-a716-446655440003', 'treatment_completed', '["植牙手术"]', 80000.00, 80000.00, 'paid', 'credit_card', 'active', 1),
+('王大卫', '1990-11-08', 'male', '0934567890', 'wang@example.com', '台中市', 'CL20241201000003', '550e8400-e29b-41d4-a716-446655440001', '550e8400-e29b-41d4-a716-446655440003', 'initial_consultation', '["根管治疗"]', 15000.00, 0.00, 'unpaid', 'cash', 'active', 1),
+('张雅婷', '1992-05-30', 'female', '0945678901', 'zhang@example.com', '新竹市', 'CL20241201000004', '550e8400-e29b-41d4-a716-446655440002', '550e8400-e29b-41d4-a716-446655440003', 'treatment_planning', '["隐形矫正"]', 120000.00, 30000.00, 'partial_paid', 'bank_transfer', 'active', 1);
 
 -- 创建视图：活跃患者
 CREATE VIEW `pd`.active_patients AS
@@ -205,7 +205,7 @@ SELECT
     email,
     city,
     clinic_id,
-    assigned_doctor_id,
+    assigned_doctor_uuid,
     treatment_status,
     treatment_progress,
     total_cost,
@@ -303,7 +303,7 @@ BEGIN
         email,
         next_appointment_date,
         treatment_status,
-        assigned_doctor_id,
+        assigned_doctor_uuid,
         clinic_id
     FROM `pd`.patients 
     WHERE is_deleted = 0 

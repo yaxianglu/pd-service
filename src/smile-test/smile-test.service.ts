@@ -2,6 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { SmileTest } from '../entities/smile-test.entity';
+import { Patient } from '../entities/patient.entity';
+import { AdminUser } from '../entities/admin-user.entity';
+import { Clinic } from '../entities/clinic.entity';
 
 export interface SmileTestData {
   uuid?: string;
@@ -35,6 +38,14 @@ export interface SmileTestData {
   test_status?: string;
   appointment_date?: Date;
   follow_up_date?: Date;
+  patient_uuid?: string;
+}
+
+export interface SmileTestWithRelations {
+  smileTest: any;
+  patient?: any;
+  doctor?: any;
+  clinic?: any;
 }
 
 @Injectable()
@@ -42,12 +53,68 @@ export class SmileTestService {
   constructor(
     @InjectRepository(SmileTest)
     private smileTestRepository: Repository<SmileTest>,
+    @InjectRepository(Patient)
+    private patientRepository: Repository<Patient>,
+    @InjectRepository(AdminUser)
+    private adminUserRepository: Repository<AdminUser>,
+    @InjectRepository(Clinic)
+    private clinicRepository: Repository<Clinic>,
   ) {}
 
   async findByUuid(uuid: string): Promise<SmileTest | null> {
     return await this.smileTestRepository.findOne({ 
       where: { uuid, is_deleted: false } 
     });
+  }
+
+  async findByUuidWithRelations(uuid: string): Promise<SmileTestWithRelations | null> {
+    // 查询微笑测试
+    const smileTest = await this.smileTestRepository.findOne({ 
+      where: { uuid, is_deleted: false } 
+    });
+
+    if (!smileTest) {
+      return null;
+    }
+
+    let patient = null;
+    let doctor = null;
+    let clinic = null;
+
+    // 如果有关联的患者UUID，查询患者信息
+    if (smileTest.patient_uuid) {
+      patient = await this.patientRepository.findOne({
+        where: { uuid: smileTest.patient_uuid, is_deleted: false }
+      });
+
+      // 如果患者有关联的医生UUID，查询医生信息
+      if (patient && patient.assigned_doctor_uuid) {
+        doctor = await this.adminUserRepository.findOne({
+          where: { 
+            uuid: patient.assigned_doctor_uuid, 
+            is_deleted: false,
+            role: 'doctor' // 确保是医生角色
+          }
+        });
+
+        // 如果医生有关联的诊所UUID，查询诊所信息
+        if (doctor && doctor.department) {
+          clinic = await this.clinicRepository.findOne({
+            where: { 
+              uuid: doctor.department, 
+              is_deleted: false 
+            }
+          });
+        }
+      }
+    }
+
+    return {
+      smileTest,
+      patient,
+      doctor,
+      clinic
+    };
   }
 
   async findByTestId(testId: string): Promise<SmileTest | null> {
