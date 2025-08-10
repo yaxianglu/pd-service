@@ -798,4 +798,30 @@ export class SmileTestController {
       );
     }
   }
+
+  @Post('with-patient')
+  async createWithPatient(@Body() body: any) {
+    try {
+      const result = await this.smileTestService.createWithPatient(body);
+      return {
+        success: true,
+        data: {
+          smileTest: result.smileTest,
+          patient: result.patient,
+          doctor: result.doctor,
+          clinic: result.clinic,
+        },
+        message: 'Created successfully'
+      };
+    } catch (error) {
+      throw new HttpException(
+        {
+          success: false,
+          message: 'Failed to create records',
+          error: error.message
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
 } 

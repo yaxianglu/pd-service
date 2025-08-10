@@ -207,6 +207,69 @@ export class SmileTestService {
     return true;
   }
 
+  // 同时创建 Patient 与 SmileTest（原子操作）
+  async createWithPatient(payload: {
+    full_name: string;
+    birth_date?: string | null;
+    phone?: string | null;
+    email?: string | null;
+    line_id?: string | null;
+    city?: string | null;
+    assigned_doctor_uuid: string;
+  }): Promise<SmileTestWithRelations> {
+    const { assigned_doctor_uuid, ...data } = payload;
+
+    return await this.smileTestRepository.manager.transaction(async (manager) => {
+      const patientRepo = manager.getRepository(Patient);
+      const smileRepo = manager.getRepository(SmileTest);
+      const adminRepo = manager.getRepository(AdminUser);
+      const clinicRepo = manager.getRepository(Clinic);
+
+      // 创建患者
+      const patientEntity = patientRepo.create({
+        full_name: data.full_name,
+        birth_date: (data.birth_date as any) || null,
+        phone: data.phone || null,
+        email: data.email || null,
+        line_id: data.line_id || null,
+        city: data.city || null,
+        assigned_doctor_uuid: assigned_doctor_uuid,
+        is_deleted: 0 as any,
+      } as Partial<Patient> as Patient);
+      const savedPatient = (await patientRepo.save(patientEntity)) as Patient;
+      // 重新查询以获得触发器生成的 uuid（某些数据库驱动不会把触发器字段返回到实体）
+      const patient = (await patientRepo.findOne({ where: { id: savedPatient.id } })) as Patient;
+      if (!patient || !patient.uuid) {
+        throw new Error('Failed to create patient or missing uuid');
+      }
+
+      // 创建微笑测试
+      const smileEntity = smileRepo.create({
+        full_name: data.full_name,
+        birth_date: (data.birth_date as any) || null,
+        phone: data.phone || null,
+        email: data.email || null,
+        line_id: data.line_id || null,
+        city: data.city || null,
+        patient_uuid: patient.uuid,
+        is_deleted: 0 as any,
+      } as Partial<SmileTest> as SmileTest);
+      const smileTest = (await smileRepo.save(smileEntity)) as SmileTest;
+
+      // 补充 doctor 与 clinic
+      let doctor: AdminUser | null = null;
+      let clinic: Clinic | null = null;
+      try {
+        doctor = await adminRepo.findOne({ where: { uuid: assigned_doctor_uuid, is_deleted: 0 } });
+        if (doctor && (doctor as any).department) {
+          clinic = await clinicRepo.findOne({ where: { uuid: (doctor as any).department, is_deleted: 0 } });
+        }
+      } catch {}
+
+      return { smileTest, patient, doctor, clinic } as SmileTestWithRelations;
+    });
+  }
+
   // 通过医生信息查询该医生的所有患者及其最新微笑测试
   async findByDoctorWithPatients(identifier: DoctorIdentifier): Promise<SmileTestWithRelations[]> {
     // 定位医生
