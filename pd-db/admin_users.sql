@@ -25,7 +25,7 @@ CREATE TABLE `pd`.admin_users (
     locked_until TIMESTAMP NULL COMMENT '账户锁定截止时间',
     
     -- 角色和权限
-    role ENUM('super_admin', 'admin', 'manager', 'operator') NULL DEFAULT 'operator' COMMENT '用户角色',
+    role role VARCHAR(255) NULL DEFAULT 'operator' COMMENT '用户角色',
     permissions TEXT NULL COMMENT '权限列表（JSON格式）',
     department VARCHAR(100) NULL COMMENT '所属部门',
     position VARCHAR(100) NULL COMMENT '职位',
