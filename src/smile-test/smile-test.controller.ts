@@ -20,6 +20,7 @@ export class SmileTestController {
       return {
         success: true,
         data: {
+          // 微笑测试基本信息
           smileTest: {
             id: result.smileTest.id,
             test_id: result.smileTest.test_id,
@@ -58,6 +59,7 @@ export class SmileTestController {
             created_at: result.smileTest.created_at,
             updated_at: result.smileTest.updated_at
           },
+          // 患者信息
           patient: result.patient ? {
             id: result.patient.id,
             patient_id: result.patient.patient_id,
@@ -133,6 +135,7 @@ export class SmileTestController {
             created_at: result.patient.created_at,
             updated_at: result.patient.updated_at
           } : null,
+          // 医生信息
           doctor: result.doctor ? {
             id: result.doctor.id,
             user_id: result.doctor.user_id,
@@ -158,6 +161,7 @@ export class SmileTestController {
             created_at: result.doctor.created_at,
             updated_at: result.doctor.updated_at
           } : null,
+          // 诊所信息
           clinic: result.clinic ? {
             id: result.clinic.id,
             clinic_id: result.clinic.clinic_id,
@@ -200,12 +204,14 @@ export class SmileTestController {
         message: '获取数据成功'
       };
     } catch (error) {
-      console.error('获取smile test失败:', error);
-      return {
-        success: false,
-        message: '获取数据失败',
-        error: error.message
-      };
+      throw new HttpException(
+        {
+          success: false,
+          message: '获取数据失败',
+          error: error.message
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
     }
   }
 
@@ -224,6 +230,7 @@ export class SmileTestController {
       return {
         success: true,
         data: {
+          // 微笑测试基本信息
           smileTest: {
             id: result.smileTest.id,
             test_id: result.smileTest.test_id,
@@ -262,6 +269,7 @@ export class SmileTestController {
             created_at: result.smileTest.created_at,
             updated_at: result.smileTest.updated_at
           },
+          // 患者信息
           patient: result.patient ? {
             id: result.patient.id,
             patient_id: result.patient.patient_id,
@@ -337,6 +345,7 @@ export class SmileTestController {
             created_at: result.patient.created_at,
             updated_at: result.patient.updated_at
           } : null,
+          // 医生信息
           doctor: result.doctor ? {
             id: result.doctor.id,
             user_id: result.doctor.user_id,
@@ -362,6 +371,7 @@ export class SmileTestController {
             created_at: result.doctor.created_at,
             updated_at: result.doctor.updated_at
           } : null,
+          // 诊所信息
           clinic: result.clinic ? {
             id: result.clinic.id,
             clinic_id: result.clinic.clinic_id,
@@ -404,12 +414,14 @@ export class SmileTestController {
         message: '获取关联数据成功'
       };
     } catch (error) {
-      console.error('获取smile test关联数据失败:', error);
-      return {
-        success: false,
-        message: '获取关联数据失败',
-        error: error.message
-      };
+      throw new HttpException(
+        {
+          success: false,
+          message: '获取关联数据失败',
+          error: error.message
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
     }
   }
 
@@ -438,12 +450,14 @@ export class SmileTestController {
         message: 'UUID验证成功'
       };
     } catch (error) {
-      console.error('验证UUID失败:', error);
-      return {
-        success: false,
-        message: '验证失败',
-        error: error.message
-      };
+      throw new HttpException(
+        {
+          success: false,
+          message: '验证失败',
+          error: error.message
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
     }
   }
 

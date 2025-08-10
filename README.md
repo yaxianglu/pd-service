@@ -24,5 +24,6 @@
 表关联关系：
 1. smile_test.patient_uuid → patients.uuid
 2. patients.assigned_doctor_uuid → admin_users.uuid (role = 'doctor')
+3. admin_users(role = 'doctor').department = clinics.uuid
 
 
