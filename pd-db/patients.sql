@@ -17,6 +17,8 @@ CREATE TABLE `pd`.patients (
     email VARCHAR(100) NULL COMMENT '电子邮件',
     line_id VARCHAR(100) NULL COMMENT 'Line ID',
     wechat_id VARCHAR(100) NULL COMMENT '微信ID',
+    treatment_progress DECIMAL(5,2) NULL COMMENT '治疗进度百分比',
+    hobbies TEXT NULL COMMENT '兴趣爱好（JSON格式）',
     
     -- 地址信息
     address TEXT NULL COMMENT '详细地址',
@@ -47,7 +49,6 @@ CREATE TABLE `pd`.patients (
     -- 就诊进度
     treatment_status ENUM('initial_consultation', 'treatment_planning', 'treatment_in_progress', 'treatment_completed', 'follow_up', 'discharged') NULL DEFAULT 'initial_consultation' COMMENT '治疗状态',
     treatment_phase VARCHAR(100) NULL COMMENT '治疗阶段',
-    treatment_progress DECIMAL(5,2) NULL COMMENT '治疗进度百分比',
     estimated_completion_date DATE NULL COMMENT '预计完成日期',
     actual_completion_date DATE NULL COMMENT '实际完成日期',
     
@@ -95,7 +96,6 @@ CREATE TABLE `pd`.patients (
     education_level VARCHAR(50) NULL COMMENT '教育程度',
     marital_status ENUM('single', 'married', 'divorced', 'widowed') NULL COMMENT '婚姻状况',
     family_members TEXT NULL COMMENT '家庭成员信息（JSON格式）',
-    hobbies TEXT NULL COMMENT '兴趣爱好（JSON格式）',
     preferred_language VARCHAR(20) NULL DEFAULT 'zh-TW' COMMENT '偏好语言',
     communication_preference ENUM('phone', 'email', 'line', 'wechat', 'sms') NULL COMMENT '沟通偏好',
     
