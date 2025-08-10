@@ -4,7 +4,10 @@ export enum AdminUserRole {
   SUPER_ADMIN = 'super_admin',
   ADMIN = 'admin',
   MANAGER = 'manager',
-  OPERATOR = 'operator'
+  OPERATOR = 'operator',
+  DOCTOR = 'doctor',
+  MARKET = 'market',
+  HOSPITAL = 'hospital'
 }
 
 export enum AdminUserStatus {

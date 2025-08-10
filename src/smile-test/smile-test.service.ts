@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { SmileTest } from '../entities/smile-test.entity';
 import { Patient } from '../entities/patient.entity';
-import { AdminUser } from '../entities/admin-user.entity';
+import { AdminUser, AdminUserRole } from '../entities/admin-user.entity';
 import { Clinic } from '../entities/clinic.entity';
 
 export interface SmileTestData {
@@ -42,10 +42,10 @@ export interface SmileTestData {
 }
 
 export interface SmileTestWithRelations {
-  smileTest: any;
-  patient?: any;
-  doctor?: any;
-  clinic?: any;
+  smileTest: SmileTest;
+  patient: Patient | null;
+  doctor: AdminUser | null;
+  clinic: Clinic | null;
 }
 
 @Injectable()
@@ -77,9 +77,9 @@ export class SmileTestService {
       return null;
     }
 
-    let patient = null;
-    let doctor = null;
-    let clinic = null;
+    let patient: Patient | null = null;
+    let doctor: AdminUser | null = null;
+    let clinic: Clinic | null = null;
 
     // 如果有关联的患者UUID，查询患者信息
     if (smileTest.patient_uuid) {
@@ -93,7 +93,7 @@ export class SmileTestService {
           where: { 
             uuid: patient.assigned_doctor_uuid, 
             is_deleted: false,
-            role: 'doctor' // 确保是医生角色
+            role: AdminUserRole.DOCTOR // 确保是医生角色
           }
         });
 
