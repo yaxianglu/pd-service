@@ -13,7 +13,9 @@
 
 - files：文件
 
-- patients：就诊者
+- patients：就诊者 和 治疗方案
+  - 绑定医生
+  - 绑定微笑测试
 
 - regions：地区表
 
