@@ -213,20 +213,20 @@ export class SmileTestService {
     let doctor: AdminUser | null = null;
     if (identifier.uuid) {
       doctor = await this.adminUserRepository.findOne({ where: { uuid: identifier.uuid, is_deleted: 0, role: 'doctor' } });
+      // 若按角色未找到，放宽条件再查一次（兼容历史数据）
+      if (!doctor) {
+        doctor = await this.adminUserRepository.findOne({ where: { uuid: identifier.uuid, is_deleted: 0 } });
+      }
     } else if (identifier.email) {
       doctor = await this.adminUserRepository.findOne({ where: { email: identifier.email, is_deleted: 0, role: 'doctor' } });
     } else if (identifier.username) {
       doctor = await this.adminUserRepository.findOne({ where: { username: identifier.username, is_deleted: 0, role: 'doctor' } });
     }
 
-    if (!doctor || !doctor.uuid) {
-      return [];
-    }
-
     // 该医生关联的诊所（可选）
     let clinic: Clinic | null = null;
     try {
-      if ((doctor as any).department) {
+      if (doctor && (doctor as any).department) {
         clinic = await this.clinicRepository.findOne({ where: { uuid: (doctor as any).department, is_deleted: 0 } });
       }
     } catch (e) {
@@ -234,26 +234,37 @@ export class SmileTestService {
     }
 
     // 查询所有关联患者
-    const patients = await this.patientRepository.find({ where: { assigned_doctor_uuid: doctor.uuid as string, is_deleted: 0 } });
+    let patients: Patient[] = [];
+    const targetDoctorUuid = doctor?.uuid || identifier.uuid; // 若未找到医生也用传入 uuid 作为匹配
+    if (targetDoctorUuid) {
+      patients = await this.patientRepository.find({ where: { assigned_doctor_uuid: targetDoctorUuid as string, is_deleted: 0 } });
+    }
 
     const results: SmileTestWithRelations[] = [];
 
     for (const patient of patients) {
-      let smileTest: SmileTest | null = null;
-      if (patient.uuid) {
-        // 找该患者最新的一条微笑测试（按创建时间倒序）
-        smileTest = await this.smileTestRepository.findOne({
-          where: { patient_uuid: patient.uuid as string, is_deleted: 0 },
-          order: { created_at: 'DESC' as any },
-        });
+      if (!patient.uuid) continue;
+      // 找该患者最新的一条微笑测试（按创建时间倒序）
+      const smileTest = await this.smileTestRepository.findOne({
+        where: { patient_uuid: patient.uuid as string, is_deleted: 0 },
+        order: { created_at: 'DESC' as any },
+      });
+
+      if (!smileTest || !smileTest.uuid) {
+        continue; // 没有微笑测试则跳过
       }
 
-      results.push({
-        smileTest: smileTest as any,
-        patient,
-        doctor,
-        clinic,
-      });
+      // 通过已有的方法，按 smile_test 的 uuid 获取完整关联信息
+      const full = await this.findByUuidWithRelations(smileTest.uuid);
+      if (full) {
+        // 覆盖 doctor/clinic（以防 findByUuidWithRelations 无法取到）
+        results.push({
+          smileTest: full.smileTest,
+          patient: full.patient,
+          doctor: full.doctor || doctor || null,
+          clinic: full.clinic || clinic || null,
+        });
+      }
     }
 
     return results;

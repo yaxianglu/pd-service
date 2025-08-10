@@ -5,6 +5,7 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 import { AdminUser, AdminUserStatus } from '../entities/admin-user.entity';
+import { Clinic } from '../entities/clinic.entity';
 
 export interface LoginDto {
   username: string;
@@ -15,20 +16,11 @@ export interface LoginResponse {
   success: boolean;
   message: string;
   data?: {
-    user: {
-      id: number;
-      user_id: string | null;
-      username: string;
-      email: string | null;
-      full_name: string | null;
-      role: string;
-      department: string | null;
-      position: string | null;
-      avatar: string | null;
-    };
+    user: any; // 返回完整用户信息（已去除敏感字段）
     token: string;
     refresh_token: string;
     expires_in: number;
+    clinic?: any | null; // 医生时返回诊所信息
   };
 }
 
@@ -37,6 +29,8 @@ export class AuthService {
   constructor(
     @InjectRepository(AdminUser)
     private adminUserRepository: Repository<AdminUser>,
+    @InjectRepository(Clinic)
+    private clinicRepository: Repository<Clinic>,
     private jwtService: JwtService,
   ) {}
 
@@ -91,6 +85,12 @@ export class AuthService {
     return user;
   }
 
+  private sanitizeUser(user: AdminUser) {
+    // 去除敏感字段并返回尽量完整的信息
+    const { password, token, refresh_token, token_expires_at, refresh_token_expires_at, ...safe } = user as any;
+    return safe;
+  }
+
   async login(loginDto: LoginDto): Promise<LoginResponse> {
     const { username, password } = loginDto;
 
@@ -100,34 +100,31 @@ export class AuthService {
 
     const user = await this.validateUser(username, password);
 
-    // 生成token
     const token = this.generateToken(user);
     const refreshToken = this.generateRefreshToken(user);
 
-    // 更新用户的token信息
     await this.updateUserTokens(user.id, token, refreshToken);
-
-    // 更新最后登录时间
     await this.updateLastLogin(user.id);
+
+    // 若是医生，尝试返回诊所信息（department 字段存 clinic.uuid）
+    let clinic: Clinic | null = null;
+    try {
+      if (user.role === 'doctor' && (user as any).department) {
+        clinic = await this.clinicRepository.findOne({ where: { uuid: (user as any).department, is_deleted: 0 } });
+      }
+    } catch (e) {
+      clinic = null;
+    }
 
     return {
       success: true,
       message: '登入成功',
       data: {
-        user: {
-          id: user.id,
-          user_id: user.user_id || '',
-          username: user.username,
-          email: user.email || '',
-          full_name: user.full_name || '',
-          role: user.role,
-          department: user.department || '',
-          position: user.position || '',
-          avatar: user.avatar || '',
-        },
+        user: this.sanitizeUser(user),
         token,
         refresh_token: refreshToken,
-        expires_in: 24 * 60 * 60, // 24小时，单位：秒
+        expires_in: 24 * 60 * 60,
+        clinic: clinic ? this.sanitizeClinic(clinic) : null,
       },
     };
   }
@@ -146,36 +143,33 @@ export class AuthService {
         throw new UnauthorizedException('無效的刷新令牌');
       }
 
-      // 检查刷新令牌是否过期
       if (user.refresh_token_expires_at && user.refresh_token_expires_at < new Date()) {
         throw new UnauthorizedException('刷新令牌已過期');
       }
 
-      // 生成新的token
       const newToken = this.generateToken(user);
       const newRefreshToken = this.generateRefreshToken(user);
 
-      // 更新用户的token信息
       await this.updateUserTokens(user.id, newToken, newRefreshToken);
+
+      let clinic: Clinic | null = null;
+      try {
+        if (user.role === 'doctor' && (user as any).department) {
+          clinic = await this.clinicRepository.findOne({ where: { uuid: (user as any).department, is_deleted: 0 } });
+        }
+      } catch (e) {
+        clinic = null;
+      }
 
       return {
         success: true,
         message: '令牌刷新成功',
         data: {
-          user: {
-            id: user.id,
-            user_id: user.user_id || '',
-            username: user.username,
-            email: user.email || '',
-            full_name: user.full_name || '',
-            role: user.role,
-            department: user.department || '',
-            position: user.position || '',
-            avatar: user.avatar || '',
-          },
+          user: this.sanitizeUser(user),
           token: newToken,
           refresh_token: newRefreshToken,
           expires_in: 24 * 60 * 60,
+          clinic: clinic ? this.sanitizeClinic(clinic) : null,
         },
       };
     } catch (error) {
@@ -302,5 +296,10 @@ export class AuthService {
     await this.adminUserRepository.update(userId, {
       last_login_at: new Date(),
     });
+  }
+
+  private sanitizeClinic(clinic: Clinic) {
+    // 诊所信息本身无敏感凭证字段，直接返回全部
+    return clinic;
   }
 } 
