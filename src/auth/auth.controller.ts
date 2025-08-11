@@ -2,7 +2,7 @@ import { Controller, Post, Get, Body, UseGuards, Request, HttpCode, HttpStatus, 
 import { AuthService, LoginDto } from './auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { AdminUser } from '../entities/admin-user.entity';
 import { Clinic } from '../entities/clinic.entity';
 
@@ -71,6 +71,25 @@ export class AuthController {
   async listClinics() {
     const clinics = await this.clinicRepository.find({ where: { is_deleted: 0 } as any });
     return { success: true, data: clinics };
+  }
+
+  // 获取医生及其诊所信息
+  @Get('doctors-with-clinic')
+  @UseGuards(JwtAuthGuard)
+  async listDoctorsWithClinic() {
+    const doctors = await this.adminUserRepository.find({ where: { role: 'doctor', is_deleted: 0 } as any });
+    const clinicUuids = Array.from(new Set(doctors.map((d: any) => d.department).filter(Boolean)));
+    const clinics = clinicUuids.length > 0 ? await this.clinicRepository.find({ where: { uuid: In(clinicUuids), is_deleted: 0 } as any }) : [];
+    const clinicMap: Record<string, any> = {};
+    clinics.forEach((c) => { clinicMap[(c as any).uuid] = c; });
+    const data = doctors.map((u: any) => {
+      const { password, token, refresh_token, token_expires_at, refresh_token_expires_at, ...rest } = u as any;
+      return {
+        ...rest,
+        clinic: u.department ? clinicMap[u.department] || null : null,
+      };
+    });
+    return { success: true, data };
   }
 
   // 创建管理员用户（默认创建医生账号，并可绑定诊所）
