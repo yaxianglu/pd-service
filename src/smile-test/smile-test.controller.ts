@@ -841,4 +841,41 @@ export class SmileTestController {
       );
     }
   }
+
+  // 仅创建 Patient，并把现有的 smile_test 记录更新 patient_uuid
+  @Post('bind-existing')
+  async bindExisting(@Body() body: any) {
+    const { smile_uuid, assigned_doctor_uuid } = body || {};
+    if (!smile_uuid || !assigned_doctor_uuid) {
+      throw new HttpException({ success: false, message: '缺少必要參數' }, HttpStatus.BAD_REQUEST);
+    }
+    try {
+      const existing = await this.smileTestService.findByUuid(smile_uuid);
+      if (!existing) {
+        throw new HttpException({ success: false, message: '記錄不存在' }, HttpStatus.NOT_FOUND);
+      }
+      // 创建 patient
+      const patient = await this.smileTestService.createPatient({
+        full_name: existing.full_name,
+        birth_date: existing.birth_date as any,
+        gender: existing.gender as any,
+        phone: existing.phone,
+        email: existing.email,
+        line_id: existing.line_id,
+        city: existing.city,
+        assigned_doctor_uuid,
+      });
+      if (!patient || !patient.uuid) {
+        throw new HttpException({ success: false, message: '新建患者缺少UUID' }, HttpStatus.INTERNAL_SERVER_ERROR);
+      }
+      // 更新当前 smile_test 的 patient_uuid
+      const updated = await this.smileTestService.updateByUuid(smile_uuid, { patient_uuid: patient.uuid as string });
+      return { success: true, data: { patient, smileTest: updated } };
+    } catch (error) {
+      throw new HttpException(
+        { success: false, message: '綁定失敗', error: error.message },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 } 

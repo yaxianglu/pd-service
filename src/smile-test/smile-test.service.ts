@@ -150,6 +150,32 @@ export class SmileTestService {
     return await this.smileTestRepository.save(smileTest);
   }
 
+  async createPatient(data: {
+    full_name: string;
+    birth_date?: string | null;
+    gender?: string | null;
+    phone?: string | null;
+    email?: string | null;
+    line_id?: string | null;
+    city?: string | null;
+    assigned_doctor_uuid: string;
+  }): Promise<Patient> {
+    const entity = this.patientRepository.create({
+      full_name: data.full_name,
+      birth_date: (data.birth_date as any) || null,
+      gender: (data.gender as any) || null,
+      phone: data.phone || null,
+      email: data.email || null,
+      line_id: data.line_id || null,
+      city: data.city || null,
+      assigned_doctor_uuid: data.assigned_doctor_uuid,
+      is_deleted: 0 as any,
+    } as Partial<Patient> as Patient);
+    const saved = await this.patientRepository.save(entity);
+    const patient = (await this.patientRepository.findOne({ where: { id: saved.id } })) as Patient;
+    return patient;
+  }
+
   async updateByUuid(uuid: string, data: Partial<SmileTestData>): Promise<SmileTest | null> {
     const existing = await this.findByUuid(uuid);
     if (!existing) {
