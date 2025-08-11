@@ -50,4 +50,15 @@ export class PartnersController {
       throw new HttpException({ success: false, message: error.message || '操作失敗' }, HttpStatus.BAD_REQUEST);
     }
   }
+
+  // 拒絕某個合作伙伴申請：不創建診所，狀態置為 inactive
+  @Post(':id/reject')
+  async reject(@Param('id') id: string) {
+    try {
+      const result = await this.partnersService.rejectPartnerById(Number(id));
+      return { success: true, data: result };
+    } catch (error) {
+      throw new HttpException({ success: false, message: error.message || '操作失敗' }, HttpStatus.BAD_REQUEST);
+    }
+  }
 } 

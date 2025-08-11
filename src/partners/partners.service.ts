@@ -131,4 +131,14 @@ export class PartnersService {
 
     return { clinic: savedClinic, partner: dentist };
   }
+
+  async rejectPartnerById(id: number) {
+    const dentist = await this.dentistInfoRepository.findOne({ where: { id } });
+    if (!dentist) {
+      throw new Error('申請記錄不存在');
+    }
+    dentist.status = 'inactive' as any; // 標記為拒絕/未啟用
+    await this.dentistInfoRepository.save(dentist);
+    return { partner: dentist };
+  }
 } 
