@@ -1,5 +1,8 @@
-import { Controller, Get, Post, Put, Delete, Param, Body, HttpException, HttpStatus, Query } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Param, Body, HttpException, HttpStatus, Query, Res } from '@nestjs/common';
 import { SmileTestService, SmileTestData } from './smile-test.service';
+import { Response } from 'express';
+import * as JSZip from 'jszip';
+import axios from 'axios';
 
 @Controller('api/smile-test')
 export class SmileTestController {
@@ -827,6 +830,63 @@ export class SmileTestController {
         },
         HttpStatus.INTERNAL_SERVER_ERROR
       );
+    }
+  }
+
+  // 下載指定 UUID 的四張照片作為 ZIP
+  @Get('uuid/:uuid/photos.zip')
+  async downloadPhotosZip(@Param('uuid') uuid: string, @Res() res: Response) {
+    try {
+      const result = await this.smileTestService.findByUuid(uuid);
+      if (!result) {
+        return res.status(HttpStatus.NOT_FOUND).json({ success: false, message: '記錄不存在' });
+      }
+
+      const urls: (string | null | undefined)[] = [
+        (result as any).teeth_image_1,
+        (result as any).teeth_image_2,
+        (result as any).teeth_image_3,
+        (result as any).teeth_image_4,
+      ];
+
+      const valid = urls.filter(Boolean) as string[];
+      if (valid.length === 0) {
+        return res.status(HttpStatus.BAD_REQUEST).json({ success: false, message: '沒有可下載的照片' });
+      }
+
+      const ZipCtor: any = (JSZip as any)?.default || (JSZip as any);
+      const zip = new ZipCtor();
+
+      for (let i = 0; i < valid.length; i++) {
+        const u = valid[i];
+        if (u.startsWith('data:image/')) {
+          // base64 內聯圖片
+          const mime = u.substring(5, u.indexOf(';')) || 'image/jpeg';
+          const ext = mime.split('/')[1] || 'jpg';
+          const base64Data = u.split(',')[1] || '';
+          zip.file(`photo_${i + 1}.${ext}`, base64Data, { base64: true });
+        } else {
+          // 網路圖片 URL
+          const resp = await axios.get(u, { responseType: 'arraybuffer' });
+          const nameFromUrl = (() => {
+            const part = u.split('/').pop() || `photo_${i + 1}`;
+            const clean = part.split('?')[0];
+            if (clean.includes('.')) return clean;
+            const contentType = resp.headers['content-type'] || 'image/jpeg';
+            const ext = (contentType.split('/')[1] || 'jpg').split(';')[0];
+            return `photo_${i + 1}.${ext}`;
+          })();
+          zip.file(nameFromUrl, Buffer.from(resp.data));
+        }
+      }
+
+      const buffer = await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE', compressionOptions: { level: 6 } });
+      const fileName = `smile_photos_${uuid.slice(0, 8)}.zip`;
+      res.setHeader('Content-Type', 'application/zip');
+      res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+      return res.send(buffer);
+    } catch (error) {
+      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: '打包失敗', error: (error as any)?.message });
     }
   }
 
