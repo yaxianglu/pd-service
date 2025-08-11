@@ -5,6 +5,23 @@ import { SmileTestService, SmileTestData } from './smile-test.service';
 export class SmileTestController {
   constructor(private readonly smileTestService: SmileTestService) {}
 
+  @Get()
+  async listAll() {
+    try {
+      const data = await this.smileTestService.findAll();
+      return { success: true, data };
+    } catch (error) {
+      throw new HttpException(
+        {
+          success: false,
+          message: '获取数据失败',
+          error: error.message
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
   @Get('uuid/:uuid')
   async getSmileTestByUuid(@Param('uuid') uuid: string) {
     try {
