@@ -744,6 +744,20 @@ export class SmileTestController {
     }
   }
 
+  // 更新 smile_test 的備註（覆用 considerations 字段）
+  @Put('uuid/:uuid/bio')
+  async updateSmileTestBio(@Param('uuid') uuid: string, @Body() body: { bio: string }) {
+    try {
+      const result = await this.smileTestService.updateByUuid(uuid, { considerations: body.bio });
+      return { success: true, data: result };
+    } catch (error) {
+      throw new HttpException(
+        { success: false, message: 'Failed to update bio', error: error.message },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
   @Put('test-id/:testId')
   async updateSmileTestByTestId(@Param('testId') testId: string, @Body() data: SmileTestData) {
     try {
