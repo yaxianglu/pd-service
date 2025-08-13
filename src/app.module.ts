@@ -11,7 +11,7 @@ import { Clinic } from './entities/clinic.entity';
 import { PaypalModule } from './paypal/paypal.module';
 import { Appointment } from './entities/appointment.entity';
 import { EmailModule } from './email/email.module';
-import { PdfModule } from './pdf/pdf.module';
+// import { PdfModule } from './pdf/pdf.module';
 import { PartnersModule } from './partners/partners.module';
 import { AuthModule } from './auth/auth.module';
 import { SmileTestModule } from './smile-test/smile-test.module';
