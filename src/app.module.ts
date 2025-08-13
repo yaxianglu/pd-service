@@ -23,7 +23,7 @@ import { AppointmentsModule } from './schedule/appointments.module';
     TypeOrmModule.forFeature([DentistInfo, PaymentRecord, AdminUser, SmileTest, Clinic, Appointment]),
     PaypalModule,
     EmailModule,
-    PdfModule,
+    // PdfModule,
     PartnersModule,
     AuthModule,
     SmileTestModule,
