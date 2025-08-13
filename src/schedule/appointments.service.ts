@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { AdminUser } from '../entities/admin-user.entity';
+import { SmileTest } from '../entities/smile-test.entity';
 import { Appointment } from '../entities/appointment.entity';
 
 @Injectable()
@@ -20,10 +22,28 @@ export class AppointmentsService {
   async findByMonth(year: number, month: number) {
     // month: 1-12
     const mm = String(month).padStart(2, '0');
-    return this.repo
+    const rows = await this.repo
       .createQueryBuilder('a')
+      .leftJoin(SmileTest, 'p', 'p.uuid = a.patient_uuid')
+      .leftJoin(AdminUser, 'd', 'd.uuid = a.doctor_uuid')
+      .select([
+        'a.id as id',
+        'a.uuid as uuid',
+        'a.date as date',
+        'a.start_time as start_time',
+        'a.end_time as end_time',
+        'a.note as note',
+        'a.status as status',
+        'a.priority as priority',
+        // use joined tables as the source of uuid/name to avoid nulls when columns on a.* are empty
+        'p.uuid as patient_uuid',
+        'd.uuid as doctor_uuid',
+        'p.full_name as patient_name',
+        'd.username as doctor_name'
+      ])
       .where('DATE_FORMAT(a.date, "%Y-%m") = :ym', { ym: `${year}-${mm}` })
-      .getMany();
+      .getRawMany();
+    return rows;
   }
 }
 
