@@ -45,6 +45,18 @@ export class AppointmentsService {
       .getRawMany();
     return rows;
   }
+
+  async update(idOrUuid: string | number, dto: Partial<Appointment>) {
+    // 支持用數字 id 或 uuid 更新
+    const where: any = String(idOrUuid).length > 8 && isNaN(Number(idOrUuid))
+      ? { uuid: String(idOrUuid) }
+      : { id: Number(idOrUuid) };
+    const existing = await this.repo.findOne({ where });
+    if (!existing) return { success: false, message: 'Appointment not found' } as any;
+    const merged = this.repo.merge(existing, dto);
+    const saved = await this.repo.save(merged);
+    return saved;
+  }
 }
 
 function cryptoRandom() {
