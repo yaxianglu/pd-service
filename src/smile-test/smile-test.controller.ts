@@ -1,12 +1,18 @@
 import { Controller, Get, Post, Put, Delete, Param, Body, HttpException, HttpStatus, Query, Res } from '@nestjs/common';
 import { SmileTestService, SmileTestData } from './smile-test.service';
+import { Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Patient } from '../entities/patient.entity';
 import { Response } from 'express';
 import * as JSZip from 'jszip';
 import axios from 'axios';
 
 @Controller('api/smile-test')
 export class SmileTestController {
-  constructor(private readonly smileTestService: SmileTestService) {}
+  constructor(
+    private readonly smileTestService: SmileTestService,
+    @InjectRepository(Patient) private readonly patientRepo: Repository<Patient>,
+  ) {}
 
   @Get()
   async listAll() {
@@ -22,6 +28,23 @@ export class SmileTestController {
         },
         HttpStatus.INTERNAL_SERVER_ERROR
       );
+    }
+  }
+
+  // 將患者的 treatment_progress 更新為指定步數（例如 1=預約完成）
+  @Put('patient/:uuid/progress')
+  async updatePatientProgress(@Param('uuid') uuid: string, @Body() body: { progress: number }) {
+    try {
+      const progress = Number(body?.progress ?? 0);
+      const patient = await this.patientRepo.findOne({ where: { uuid } });
+      if (!patient) {
+        return { success: false, message: 'Patient not found' };
+      }
+      (patient as any).treatment_progress = progress as any;
+      await this.patientRepo.save(patient);
+      return { success: true, data: { uuid, treatment_progress: progress } };
+    } catch (error) {
+      throw new HttpException({ success: false, message: 'Failed to update progress', error: (error as any)?.message }, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -113,7 +136,7 @@ export class SmileTestController {
             next_appointment_date: result.patient.next_appointment_date,
             treatment_status: result.patient.treatment_status,
             treatment_phase: result.patient.treatment_phase,
-            treatment_progress: result.patient.treatment_progress,
+            treatment_progress: Number((result.patient as any).treatment_progress || 0),
             estimated_completion_date: result.patient.estimated_completion_date,
             actual_completion_date: result.patient.actual_completion_date,
             selected_treatment_plan: result.patient.selected_treatment_plan,
@@ -311,7 +334,7 @@ export class SmileTestController {
           next_appointment_date: result.patient.next_appointment_date,
           treatment_status: result.patient.treatment_status,
           treatment_phase: result.patient.treatment_phase,
-          treatment_progress: result.patient.treatment_progress,
+          treatment_progress: Number((result.patient as any).treatment_progress || 0),
           estimated_completion_date: result.patient.estimated_completion_date,
           actual_completion_date: result.patient.actual_completion_date,
           selected_treatment_plan: result.patient.selected_treatment_plan,
@@ -519,7 +542,7 @@ export class SmileTestController {
             next_appointment_date: result.patient.next_appointment_date,
             treatment_status: result.patient.treatment_status,
             treatment_phase: result.patient.treatment_phase,
-            treatment_progress: result.patient.treatment_progress,
+            treatment_progress: Number((result.patient as any).treatment_progress || 0),
             estimated_completion_date: result.patient.estimated_completion_date,
             actual_completion_date: result.patient.actual_completion_date,
             selected_treatment_plan: result.patient.selected_treatment_plan,
