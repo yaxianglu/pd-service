@@ -88,48 +88,76 @@ export class PartnersService {
   }
 
   async approvePartnerById(id: number) {
-    // 查找申请记录
-    const dentist = await this.dentistInfoRepository.findOne({ where: { id } });
-    if (!dentist) {
-      throw new Error('申請記錄不存在');
-    }
+    // 使用事务，确保创建诊所与更新状态要么都成功要么都回滚
+    return await this.clinicRepository.manager.transaction(async (manager) => {
+      const dentistRepo = manager.getRepository(DentistInfo);
+      const clinicRepo = manager.getRepository(Clinic);
 
-    // 创建診所資料（若已存在同名且未刪除可直接返回）
-    const clinic = this.clinicRepository.create({
-      clinic_name: dentist.clinic_name || `${dentist.full_name || '未命名'}診所`,
-      address: dentist.address || null,
-      city: dentist.city || null,
-      phone: dentist.phone || null,
-      email: dentist.email || null,
-      owner_name: dentist.full_name || null,
-      owner_phone: dentist.phone || null,
-      clinic_type: ((): ClinicType | null => {
-        const t = (dentist as any).clinic_type as string | undefined;
-        if (!t) return null;
-        const map: Record<string, ClinicType> = {
-          private: ClinicType.GENERAL,
-          public: ClinicType.GENERAL,
-          corporate: ClinicType.GENERAL,
-          other: ClinicType.OTHER,
-          orthodontic: ClinicType.ORTHODONTIC,
-          cosmetic: ClinicType.COSMETIC,
-          pediatric: ClinicType.PEDIATRIC,
-          specialized: ClinicType.SPECIALIZED,
-          general: ClinicType.GENERAL,
-        };
-        return map[t] ?? ClinicType.GENERAL;
-      })(),
-      status: ClinicStatus.ACTIVE,
-      clinic_code: dentist.uuid || undefined,
-      is_deleted: 0 as any,
-    } as Partial<Clinic> as Clinic);
-    const savedClinic = await this.clinicRepository.save(clinic);
+      // 查找申请记录
+      const dentist = await dentistRepo.findOne({ where: { id } });
+      if (!dentist) {
+        throw new Error('申請記錄不存在');
+      }
 
-    // 更新申请状态
-    dentist.status = 'active' as any;
-    await this.dentistInfoRepository.save(dentist);
+      // 优先根据唯一标识尝试找到已存在的诊所，避免重复创建
+      let existingClinic: Clinic | null = null;
+      if (dentist.uuid) {
+        existingClinic = await clinicRepo.findOne({ where: { clinic_code: dentist.uuid } as any });
+      }
+      if (!existingClinic && dentist.clinic_name) {
+        existingClinic = await clinicRepo.findOne({ where: { clinic_name: dentist.clinic_name, is_deleted: 0 as any } as any });
+      }
 
-    return { clinic: savedClinic, partner: dentist };
+      let savedClinic = existingClinic;
+      if (!savedClinic) {
+        const clinic = clinicRepo.create({
+          clinic_name: dentist.clinic_name || `${dentist.full_name || '未命名'}診所`,
+          address: dentist.address || null,
+          city: dentist.city || null,
+          phone: dentist.phone || null,
+          email: dentist.email || null,
+          owner_name: dentist.full_name || null,
+          owner_phone: dentist.phone || null,
+          clinic_type: ((): ClinicType | null => {
+            const t = (dentist as any).clinic_type as string | undefined;
+            if (!t) return null;
+            const map: Record<string, ClinicType> = {
+              private: ClinicType.GENERAL,
+              public: ClinicType.GENERAL,
+              corporate: ClinicType.GENERAL,
+              other: ClinicType.OTHER,
+              orthodontic: ClinicType.ORTHODONTIC,
+              cosmetic: ClinicType.COSMETIC,
+              pediatric: ClinicType.PEDIATRIC,
+              specialized: ClinicType.SPECIALIZED,
+              general: ClinicType.GENERAL,
+            };
+            return map[t] ?? ClinicType.GENERAL;
+          })(),
+          status: ClinicStatus.ACTIVE,
+          clinic_code: dentist.uuid || undefined,
+          is_deleted: 0 as any,
+        } as Partial<Clinic> as Clinic);
+
+        try {
+          savedClinic = await clinicRepo.save(clinic);
+        } catch (e: any) {
+          // 抛出更明确的错误信息，便于前端显示
+          throw new Error(`診所創建失敗：${e?.message || '未知錯誤'}`);
+        }
+      }
+
+      // 更新申请状态（即使诊所已存在，也要把申請設為 active）
+      try {
+        dentist.status = 'active' as any;
+        await dentistRepo.save(dentist);
+      } catch (e: any) {
+        throw new Error(`合作夥伴狀態更新失敗：${e?.message || '未知錯誤'}`);
+      }
+
+      // 返回结果
+      return { clinic: savedClinic!, partner: dentist };
+    });
   }
 
   async rejectPartnerById(id: number) {
