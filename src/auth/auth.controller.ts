@@ -135,4 +135,21 @@ export class AuthController {
     const { password: _, token, refresh_token, token_expires_at, refresh_token_expires_at, ...safe } = saved as any;
     return { success: true, data: safe, message: '創建成功' };
   }
+
+  // 修改密码
+  @Post('change-password')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  async changePassword(@Request() req, @Body() body: { currentPassword: string; newPassword: string }) {
+    const { currentPassword, newPassword } = body;
+    if (!currentPassword || !newPassword) {
+      throw new BadRequestException('缺少必要字段：currentPassword 或 newPassword');
+    }
+
+    if (newPassword.length < 6) {
+      throw new BadRequestException('新密碼至少需要6個字符');
+    }
+
+    return this.authService.changePassword(req.user.id, currentPassword, newPassword);
+  }
 } 

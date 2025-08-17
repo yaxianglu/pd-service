@@ -302,4 +302,47 @@ export class AuthService {
     // 诊所信息本身无敏感凭证字段，直接返回全部
     return clinic;
   }
+
+  // 修改密码
+  async changePassword(userId: number, currentPassword: string, newPassword: string) {
+    try {
+      // 获取用户信息
+      const user = await this.adminUserRepository.findOne({ where: { id: userId, is_deleted: 0 } });
+      if (!user) {
+        return {
+          success: false,
+          message: '用戶不存在',
+        };
+      }
+
+      // 验证当前密码
+      const isCurrentPasswordValid = await this.verifyPassword(currentPassword, (user as any).password);
+      if (!isCurrentPasswordValid) {
+        return {
+          success: false,
+          message: '當前密碼錯誤',
+        };
+      }
+
+      // 存储新密码（沿用登录逻辑，若前端发送 SHA-256 字符串，则以 'hashed_' 前缀保存）
+      const storedNewPassword = newPassword.length === 64 ? `hashed_${newPassword}` : newPassword;
+
+      // 更新密码
+      await this.adminUserRepository.update(userId, {
+        password: storedNewPassword,
+        updated_at: new Date(),
+      });
+
+      return {
+        success: true,
+        message: '密碼修改成功',
+      };
+    } catch (error) {
+      console.error('Change password error:', error);
+      return {
+        success: false,
+        message: '密碼修改失敗',
+      };
+    }
+  }
 } 
