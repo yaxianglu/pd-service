@@ -48,6 +48,22 @@ export class SmileTestController {
     }
   }
 
+  @Put('patient/:uuid/hobbies')
+  async updatePatientHobbies(@Param('uuid') uuid: string, @Body() body: { hobbies: number }) {
+    try {
+      const hobbies = Number(body?.hobbies ?? 0);
+      const patient = await this.patientRepo.findOne({ where: { uuid } });
+      if (!patient) {
+        return { success: false, message: 'Patient not found' };
+      }
+      (patient as any).hobbies = hobbies as any;
+      await this.patientRepo.save(patient);
+      return { success: true, data: { uuid, hobbies } };
+    } catch (error) {
+      throw new HttpException({ success: false, message: 'Failed to update progress', error: (error as any)?.message }, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
   @Get('uuid/:uuid')
   async getSmileTestByUuid(@Param('uuid') uuid: string) {
     try {
