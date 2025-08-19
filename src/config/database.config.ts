@@ -9,6 +9,7 @@ export const databaseConfig: TypeOrmModuleOptions = {
   host: 'pd-db-new.cgbiaakssebs.us-east-1.rds.amazonaws.com',
   username: 'henrycao',
   password: 'Pearl#89$Hc!',
+
   // host: 'localhost',
   // username: 'root',
   // password: 'Shein@123',
