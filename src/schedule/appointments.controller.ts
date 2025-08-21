@@ -24,6 +24,11 @@ export class AppointmentsController {
   update(@Param('id') id: string, @Body() dto: any) {
     return this.service.update(id, dto);
   }
+
+  @Put(':id/cancel')
+  cancel(@Param('id') id: string) {
+    return this.service.cancel(id);
+  }
 }
 
 

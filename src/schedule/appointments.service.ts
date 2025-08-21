@@ -41,7 +41,8 @@ export class AppointmentsService {
         'p.full_name as patient_name',
         'd.username as doctor_name'
       ])
-      .where('DATE_FORMAT(a.date, "%Y-%m") = :ym', { ym: `${year}-${mm}` });
+      .where('DATE_FORMAT(a.date, "%Y-%m") = :ym', { ym: `${year}-${mm}` })
+      .andWhere('a.status != :cancelledStatus', { cancelledStatus: 'cancelled' });
 
     // 添加患者过滤
     if (patientUuid) {
@@ -70,6 +71,20 @@ export class AppointmentsService {
     const merged = this.repo.merge(existing, dto);
     const saved = await this.repo.save(merged);
     return saved;
+  }
+
+  async cancel(idOrUuid: string | number) {
+    // 支持用數字 id 或 uuid 取消
+    const where: any = String(idOrUuid).length > 8 && isNaN(Number(idOrUuid))
+      ? { uuid: String(idOrUuid) }
+      : { id: Number(idOrUuid) };
+    const existing = await this.repo.findOne({ where });
+    if (!existing) return { success: false, message: 'Appointment not found' } as any;
+    
+    // 更新状态为取消
+    const updated = this.repo.merge(existing, { status: 'cancelled' });
+    const saved = await this.repo.save(updated);
+    return { success: true, message: '预约已取消', data: saved };
   }
 }
 
