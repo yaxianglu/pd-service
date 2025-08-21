@@ -11,8 +11,13 @@ export class AppointmentsController {
   }
 
   @Get('by-month')
-  listByMonth(@Query('year') year: string, @Query('month') month: string) {
-    return this.service.findByMonth(Number(year), Number(month));
+  listByMonth(
+    @Query('year') year: string, 
+    @Query('month') month: string,
+    @Query('patient_uuid') patientUuid?: string,
+    @Query('doctor_uuid') doctorUuid?: string
+  ) {
+    return this.service.findByMonth(Number(year), Number(month), patientUuid, doctorUuid);
   }
 
   @Put(':id')

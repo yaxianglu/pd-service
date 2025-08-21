@@ -19,10 +19,10 @@ export class AppointmentsService {
     return this.repo.save(entity);
   }
 
-  async findByMonth(year: number, month: number) {
+  async findByMonth(year: number, month: number, patientUuid?: string, doctorUuid?: string) {
     // month: 1-12
     const mm = String(month).padStart(2, '0');
-    const rows = await this.repo
+    const queryBuilder = this.repo
       .createQueryBuilder('a')
       .leftJoin(SmileTest, 'p', 'p.uuid = a.patient_uuid')
       .leftJoin(AdminUser, 'd', 'd.uuid = a.doctor_uuid')
@@ -35,15 +35,28 @@ export class AppointmentsService {
         'a.note as note',
         'a.status as status',
         'a.priority as priority',
-        // use joined tables as the source of uuid/name to avoid nulls when columns on a.* are empty
-        'p.uuid as patient_uuid',
-        'd.uuid as doctor_uuid',
+        // 直接从 appointments 表获取 patient_uuid，避免 JOIN 导致的 NULL
+        'a.patient_uuid as patient_uuid',
+        'a.doctor_uuid as doctor_uuid',
         'p.full_name as patient_name',
         'd.username as doctor_name'
       ])
-      .where('DATE_FORMAT(a.date, "%Y-%m") = :ym', { ym: `${year}-${mm}` })
+      .where('DATE_FORMAT(a.date, "%Y-%m") = :ym', { ym: `${year}-${mm}` });
+
+    // 添加患者过滤
+    if (patientUuid) {
+      queryBuilder.andWhere('a.patient_uuid = :patientUuid', { patientUuid });
+    }
+
+    // 添加医生过滤
+    if (doctorUuid) {
+      queryBuilder.andWhere('a.doctor_uuid = :doctorUuid', { doctorUuid });
+    }
+
+    const rows = await queryBuilder
       .orderBy('a.created_at', 'DESC') // 按创建日期降序排序，最新的在最上面
       .getRawMany();
+    
     return rows;
   }
 
