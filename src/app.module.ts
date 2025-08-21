@@ -16,6 +16,7 @@ import { PartnersModule } from './partners/partners.module';
 import { AuthModule } from './auth/auth.module';
 import { SmileTestModule } from './smile-test/smile-test.module';
 import { AppointmentsModule } from './schedule/appointments.module';
+import { ClinicModule } from './clinic/clinic.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { AppointmentsModule } from './schedule/appointments.module';
     AuthModule,
     SmileTestModule,
     AppointmentsModule,
+    ClinicModule,
   ],
   controllers: [AppController],
   providers: [AppService],
