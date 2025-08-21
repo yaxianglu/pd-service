@@ -90,16 +90,16 @@ export class Patient {
   })
   blood_type: string | null;
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ type: 'longtext', nullable: true })
   allergies: string | null;
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ type: 'longtext', nullable: true })
   medical_history: string | null;
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ type: 'longtext', nullable: true })
   current_medications: string | null;
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ type: 'longtext', nullable: true })
   dental_history: string | null;
 
   @Column({ type: 'varchar', length: 100, nullable: true })
@@ -155,16 +155,16 @@ export class Patient {
   @Column({ type: 'date', nullable: true })
   actual_completion_date: Date | null;
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ type: 'longtext', nullable: true })
   selected_treatment_plan: string | null;
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ type: 'longtext', nullable: true })
   selected_products: string | null;
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ type: 'longtext', nullable: true })
   treatment_notes: string | null;
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ type: 'longtext', nullable: true })
   special_requirements: string | null;
 
   @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })

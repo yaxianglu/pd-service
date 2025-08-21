@@ -42,10 +42,10 @@ export class SmileTest {
   @Index()
   teeth_type: string;
 
-  @Column('text', { nullable: true })
+  @Column('longtext', { nullable: true })
   considerations: string;
 
-  @Column('text', { nullable: true })
+  @Column('longtext', { nullable: true })
   improvement_points: string;
 
   @Column('longtext', { nullable: true })
@@ -69,7 +69,7 @@ export class SmileTest {
   @Column('varchar', { length: 100, nullable: true })
   occupation: string;
 
-  @Column('text', { nullable: true })
+  @Column('longtext', { nullable: true })
   address: string;
 
   @Column('varchar', { length: 100, nullable: true })
@@ -78,16 +78,16 @@ export class SmileTest {
   @Column('varchar', { length: 20, nullable: true })
   emergency_phone: string;
 
-  @Column('text', { nullable: true })
+  @Column('longtext', { nullable: true })
   dental_history: string;
 
-  @Column('text', { nullable: true })
+  @Column('longtext', { nullable: true })
   current_issues: string;
 
-  @Column('text', { nullable: true })
+  @Column('longtext', { nullable: true })
   allergies: string;
 
-  @Column('text', { nullable: true })
+  @Column('longtext', { nullable: true })
   medications: string;
 
   @Column('decimal', { precision: 5, scale: 2, nullable: true })
