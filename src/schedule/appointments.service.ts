@@ -42,6 +42,7 @@ export class AppointmentsService {
         'd.username as doctor_name'
       ])
       .where('DATE_FORMAT(a.date, "%Y-%m") = :ym', { ym: `${year}-${mm}` })
+      .orderBy('a.created_at', 'DESC') // 按创建日期降序排序，最新的在最上面
       .getRawMany();
     return rows;
   }

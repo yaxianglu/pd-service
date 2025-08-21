@@ -137,7 +137,8 @@ export class SmileTestService {
 
   async findAll(): Promise<SmileTest[]> {
     return this.smileTestRepository.find({ 
-      where: { is_deleted: 0 } 
+      where: { is_deleted: 0 },
+      order: { created_at: 'DESC' } // 按创建日期降序排序，最新的在最上面
     });
   }
 
@@ -329,7 +330,10 @@ export class SmileTestService {
     let patients: Patient[] = [];
     const targetDoctorUuid = doctor?.uuid || identifier.uuid; // 若未找到医生也用传入 uuid 作为匹配
     if (targetDoctorUuid) {
-      patients = await this.patientRepository.find({ where: { assigned_doctor_uuid: targetDoctorUuid as string, is_deleted: 0 } });
+      patients = await this.patientRepository.find({ 
+        where: { assigned_doctor_uuid: targetDoctorUuid as string, is_deleted: 0 },
+        order: { created_at: 'DESC' } // 按创建日期降序排序，最新的在最上面
+      });
     }
 
     const results: SmileTestWithRelations[] = [];

@@ -57,7 +57,10 @@ export class AuthController {
   @Get('doctors')
   @UseGuards(JwtAuthGuard)
   async listDoctors() {
-    const users = await this.adminUserRepository.find({ where: { role: 'doctor', is_deleted: 0 } });
+    const users = await this.adminUserRepository.find({ 
+      where: { role: 'doctor', is_deleted: 0 },
+      order: { created_at: 'DESC' } // 按创建日期降序排序，最新的在最上面
+    });
     const sanitized = users.map((u) => {
       const { password, token, refresh_token, token_expires_at, refresh_token_expires_at, ...rest } = u as any;
       return rest;
@@ -69,7 +72,10 @@ export class AuthController {
   @Get('clinics')
   @UseGuards(JwtAuthGuard)
   async listClinics() {
-    const clinics = await this.clinicRepository.find({ where: { is_deleted: 0 } as any });
+    const clinics = await this.clinicRepository.find({ 
+      where: { is_deleted: 0 } as any,
+      order: { created_at: 'DESC' } // 按创建日期降序排序，最新的在最上面
+    });
     return { success: true, data: clinics };
   }
 
@@ -77,9 +83,15 @@ export class AuthController {
   @Get('doctors-with-clinic')
   @UseGuards(JwtAuthGuard)
   async listDoctorsWithClinic() {
-    const doctors = await this.adminUserRepository.find({ where: { role: 'doctor', is_deleted: 0 } as any });
+    const doctors = await this.adminUserRepository.find({ 
+      where: { role: 'doctor', is_deleted: 0 } as any,
+      order: { created_at: 'DESC' } // 按创建日期降序排序，最新的在最上面
+    });
     const clinicUuids = Array.from(new Set(doctors.map((d: any) => d.department).filter(Boolean)));
-    const clinics = clinicUuids.length > 0 ? await this.clinicRepository.find({ where: { uuid: In(clinicUuids), is_deleted: 0 } as any }) : [];
+    const clinics = clinicUuids.length > 0 ? await this.clinicRepository.find({ 
+      where: { uuid: In(clinicUuids), is_deleted: 0 } as any,
+      order: { created_at: 'DESC' } // 按创建日期降序排序，最新的在最上面
+    }) : [];
     const clinicMap: Record<string, any> = {};
     clinics.forEach((c) => { clinicMap[(c as any).uuid] = c; });
     const data = doctors.map((u: any) => {

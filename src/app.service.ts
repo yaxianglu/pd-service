@@ -74,7 +74,9 @@ export class AppService {
   // 获取所有牙医信息
   async getAllDentistInfo() {
     try {
-      const result = await this.dentistInfoRepository.find();
+      const result = await this.dentistInfoRepository.find({
+        order: { created_at: 'DESC' } // 按创建日期降序排序，最新的在最上面
+      });
       console.log('获取牙医信息成功，共', result.length, '条记录');
       
       return {
