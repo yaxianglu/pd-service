@@ -18,7 +18,49 @@ export class SmileTestController {
   async listAll() {
     try {
       const data = await this.smileTestService.findAll();
-      return { success: true, data };
+      
+      // 过滤掉大字段以提高性能
+      const filteredData = data.map(item => ({
+        id: item.id,
+        test_id: item.test_id,
+        uuid: item.uuid,
+        full_name: item.full_name,
+        birth_date: item.birth_date,
+        phone: item.phone,
+        email: item.email,
+        line_id: item.line_id,
+        city: item.city,
+        teeth_type: item.teeth_type,
+        // 注释掉照片字段以提高性能
+        // considerations: item.considerations,
+        // improvement_points: item.improvement_points,
+        // teeth_image_1: item.teeth_image_1,
+        // teeth_image_2: item.teeth_image_2,
+        // teeth_image_3: item.teeth_image_3,
+        // teeth_image_4: item.teeth_image_4,
+        age: item.age,
+        gender: item.gender,
+        occupation: item.occupation,
+        // address: item.address,
+        emergency_contact: item.emergency_contact,
+        emergency_phone: item.emergency_phone,
+        // dental_history: item.dental_history,
+        // current_issues: item.current_issues,
+        // allergies: item.allergies,
+        // medications: item.medications,
+        test_score: item.test_score,
+        confidence_level: item.confidence_level,
+        recommended_treatment: item.recommended_treatment,
+        estimated_cost: item.estimated_cost,
+        test_status: item.test_status,
+        appointment_date: item.appointment_date,
+        follow_up_date: item.follow_up_date,
+        patient_uuid: item.patient_uuid,
+        created_at: item.created_at,
+        updated_at: item.updated_at
+      }));
+      
+      return { success: true, data: filteredData };
     } catch (error) {
       throw new HttpException(
         {
