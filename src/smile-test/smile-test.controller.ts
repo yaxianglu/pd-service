@@ -1231,6 +1231,46 @@ export class SmileTestController {
     }
   }
 
+  // 专门用于下载存储在 allergies 字段中的文件
+  @Get('uuid/:uuid/download-file')
+  async downloadFileFromAllergies(@Param('uuid') uuid: string) {
+    try {
+      const result = await this.smileTestService.findByUuid(uuid);
+      if (!result) {
+        return {
+          success: false,
+          message: '記錄不存在'
+        };
+      }
+
+      // 只返回 allergies 字段，用于文件下载
+      const allergies = (result as any).allergies;
+      if (!allergies) {
+        return {
+          success: false,
+          message: '沒有可下載的文件'
+        };
+      }
+
+      return {
+        success: true,
+        data: {
+          allergies: allergies
+        },
+        message: '获取文件数据成功'
+      };
+    } catch (error) {
+      throw new HttpException(
+        {
+          success: false,
+          message: '获取文件数据失败',
+          error: error.message
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
   @Post('with-patient')
   async createWithPatient(@Body() body: any) {
     try {
