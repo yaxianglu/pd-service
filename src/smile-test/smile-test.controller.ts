@@ -133,23 +133,25 @@ export class SmileTestController {
             line_id: result.smileTest.line_id,
             city: result.smileTest.city,
             teeth_type: result.smileTest.teeth_type,
-            considerations: result.smileTest.considerations,
-            improvement_points: result.smileTest.improvement_points,
-            teeth_image_1: result.smileTest.teeth_image_1,
-            teeth_image_2: result.smileTest.teeth_image_2,
-            teeth_image_3: result.smileTest.teeth_image_3,
-            teeth_image_4: result.smileTest.teeth_image_4,
+            // 注释掉 longtext 字段以提高性能
+            // considerations: result.smileTest.considerations,
+            // improvement_points: result.smileTest.improvement_points,
+            // 注释掉照片字段以提高性能
+            // teeth_image_1: result.smileTest.teeth_image_1,
+            // teeth_image_2: result.smileTest.teeth_image_2,
+            // teeth_image_3: result.smileTest.teeth_image_3,
+            // teeth_image_4: result.smileTest.teeth_image_4,
             age: result.smileTest.age,
             gender: result.smileTest.gender,
             occupation: result.smileTest.occupation,
-            address: result.smileTest.address,
+            // address: result.smileTest.address,
             emergency_contact: result.smileTest.emergency_contact,
             emergency_phone: result.smileTest.emergency_phone,
-            dental_history: result.smileTest.dental_history,
-            current_issues: result.smileTest.current_issues,
+            // dental_history: result.smileTest.dental_history,
+            // current_issues: result.smileTest.current_issues,
             // 注释掉 allergies 字段以提高性能（longtext 类型，包含大量文件数据）
             // allergies: result.smileTest.allergies,
-            medications: result.smileTest.medications,
+            // medications: result.smileTest.medications,
             test_score: result.smileTest.test_score,
             confidence_level: result.smileTest.confidence_level,
             recommended_treatment: result.smileTest.recommended_treatment,
@@ -182,9 +184,10 @@ export class SmileTestController {
             blood_type: result.patient.blood_type,
             // 注释掉 allergies 字段以提高性能（longtext 类型，数据量大）
             // allergies: result.patient.allergies,
-            medical_history: result.patient.medical_history,
-            current_medications: result.patient.current_medications,
-            dental_history: result.patient.dental_history,
+            // 注释掉其他 longtext 字段以提高性能
+            // medical_history: result.patient.medical_history,
+            // current_medications: result.patient.current_medications,
+            // dental_history: result.patient.dental_history,
             insurance_provider: result.patient.insurance_provider,
             insurance_number: result.patient.insurance_number,
             clinic_id: result.patient.clinic_id,
@@ -199,10 +202,11 @@ export class SmileTestController {
             treatment_progress: Number((result.patient as any).treatment_progress || 0),
             estimated_completion_date: result.patient.estimated_completion_date,
             actual_completion_date: result.patient.actual_completion_date,
-            selected_treatment_plan: result.patient.selected_treatment_plan,
-            selected_products: result.patient.selected_products,
-            treatment_notes: result.patient.treatment_notes,
-            special_requirements: result.patient.special_requirements,
+            // 注释掉其他 longtext 字段以提高性能
+            // selected_treatment_plan: result.patient.selected_treatment_plan,
+            // selected_products: result.patient.selected_products,
+            // treatment_notes: result.patient.treatment_notes,
+            // special_requirements: result.patient.special_requirements,
             total_cost: result.patient.total_cost,
             paid_amount: result.patient.paid_amount,
             remaining_balance: result.patient.remaining_balance,
@@ -544,22 +548,25 @@ export class SmileTestController {
             line_id: result.smileTest.line_id,
             city: result.smileTest.city,
             teeth_type: result.smileTest.teeth_type,
-            considerations: result.smileTest.considerations,
-            improvement_points: result.smileTest.improvement_points,
-            teeth_image_1: result.smileTest.teeth_image_1,
-            teeth_image_2: result.smileTest.teeth_image_2,
-            teeth_image_3: result.smileTest.teeth_image_3,
-            teeth_image_4: result.smileTest.teeth_image_4,
+            // 注释掉 longtext 字段以提高性能
+            // considerations: result.smileTest.considerations,
+            // improvement_points: result.smileTest.improvement_points,
+            // 注释掉照片字段以提高性能
+            // teeth_image_1: result.smileTest.teeth_image_1,
+            // teeth_image_2: result.smileTest.teeth_image_2,
+            // teeth_image_3: result.smileTest.teeth_image_3,
+            // teeth_image_4: result.smileTest.teeth_image_4,
             age: result.smileTest.age,
             gender: result.smileTest.gender,
             occupation: result.smileTest.occupation,
-            address: result.smileTest.address,
+            // address: result.smileTest.address,
             emergency_contact: result.smileTest.emergency_contact,
             emergency_phone: result.smileTest.emergency_phone,
-            dental_history: result.smileTest.dental_history,
-            current_issues: result.smileTest.current_issues,
-            allergies: result.smileTest.allergies,
-            medications: result.smileTest.medications,
+            // dental_history: result.smileTest.dental_history,
+            // current_issues: result.smileTest.current_issues,
+            // 注释掉 allergies 字段以提高性能（longtext 类型，包含大量文件数据）
+            // allergies: result.smileTest.allergies,
+            // medications: result.smileTest.medications,
             test_score: result.smileTest.test_score,
             confidence_level: result.smileTest.confidence_level,
             recommended_treatment: result.smileTest.recommended_treatment,
@@ -592,9 +599,10 @@ export class SmileTestController {
             blood_type: result.patient.blood_type,
             // 注释掉 allergies 字段以提高性能（longtext 类型，数据量大）
             // allergies: result.patient.allergies,
-            medical_history: result.patient.medical_history,
-            current_medications: result.patient.current_medications,
-            dental_history: result.patient.dental_history,
+            // 注释掉其他 longtext 字段以提高性能
+            // medical_history: result.patient.medical_history,
+            // current_medications: result.patient.current_medications,
+            // dental_history: result.patient.dental_history,
             insurance_provider: result.patient.insurance_provider,
             insurance_number: result.patient.insurance_number,
             clinic_id: result.patient.clinic_id,
@@ -609,10 +617,11 @@ export class SmileTestController {
             treatment_progress: Number((result.patient as any).treatment_progress || 0),
             estimated_completion_date: result.patient.estimated_completion_date,
             actual_completion_date: result.patient.actual_completion_date,
-            selected_treatment_plan: result.patient.selected_treatment_plan,
-            selected_products: result.patient.selected_products,
-            treatment_notes: result.patient.treatment_notes,
-            special_requirements: result.patient.special_requirements,
+            // 注释掉其他 longtext 字段以提高性能
+            // selected_treatment_plan: result.patient.selected_treatment_plan,
+            // selected_products: result.patient.selected_products,
+            // treatment_notes: result.patient.treatment_notes,
+            // special_requirements: result.patient.special_requirements,
             total_cost: result.patient.total_cost,
             paid_amount: result.patient.paid_amount,
             remaining_balance: result.patient.remaining_balance,
@@ -775,9 +784,52 @@ export class SmileTestController {
           message: 'No data found for this Test ID'
         };
       }
+      
+      // 过滤掉大字段以提高性能
+      const filteredData = {
+        id: result.id,
+        test_id: result.test_id,
+        uuid: result.uuid,
+        full_name: result.full_name,
+        birth_date: result.birth_date,
+        phone: result.phone,
+        email: result.email,
+        line_id: result.line_id,
+        city: result.city,
+        teeth_type: result.teeth_type,
+        // 注释掉 longtext 字段以提高性能
+        // considerations: result.considerations,
+        // improvement_points: result.improvement_points,
+        // 注释掉照片字段以提高性能
+        // teeth_image_1: result.teeth_image_1,
+        // teeth_image_2: result.teeth_image_2,
+        // teeth_image_3: result.teeth_image_3,
+        // teeth_image_4: result.teeth_image_4,
+        age: result.age,
+        gender: result.gender,
+        occupation: result.occupation,
+        // address: result.address,
+        emergency_contact: result.emergency_contact,
+        emergency_phone: result.emergency_phone,
+        // dental_history: result.dental_history,
+        // current_issues: result.current_issues,
+        // allergies: result.allergies,
+        // medications: result.medications,
+        test_score: result.test_score,
+        confidence_level: result.confidence_level,
+        recommended_treatment: result.recommended_treatment,
+        estimated_cost: result.estimated_cost,
+        test_status: result.test_status,
+        appointment_date: result.appointment_date,
+        follow_up_date: result.follow_up_date,
+        patient_uuid: result.patient_uuid,
+        created_at: result.created_at,
+        updated_at: result.updated_at
+      };
+      
       return {
         success: true,
-        data: result,
+        data: filteredData,
         message: 'Data retrieved successfully'
       };
     } catch (error) {
@@ -796,9 +848,52 @@ export class SmileTestController {
   async createSmileTest(@Body() data: SmileTestData) {
     try {
       const result = await this.smileTestService.create(data);
+      
+      // 过滤掉大字段以提高性能
+      const filteredData = {
+        id: result.id,
+        test_id: result.test_id,
+        uuid: result.uuid,
+        full_name: result.full_name,
+        birth_date: result.birth_date,
+        phone: result.phone,
+        email: result.email,
+        line_id: result.line_id,
+        city: result.city,
+        teeth_type: result.teeth_type,
+        // 注释掉 longtext 字段以提高性能
+        // considerations: result.considerations,
+        // improvement_points: result.improvement_points,
+        // 注释掉照片字段以提高性能
+        // teeth_image_1: result.teeth_image_1,
+        // teeth_image_2: result.teeth_image_2,
+        // teeth_image_3: result.teeth_image_3,
+        // teeth_image_4: result.teeth_image_4,
+        age: result.age,
+        gender: result.gender,
+        occupation: result.occupation,
+        // address: result.address,
+        emergency_contact: result.emergency_contact,
+        emergency_phone: result.emergency_phone,
+        // dental_history: result.dental_history,
+        // current_issues: result.current_issues,
+        // allergies: result.allergies,
+        // medications: result.medications,
+        test_score: result.test_score,
+        confidence_level: result.confidence_level,
+        recommended_treatment: result.recommended_treatment,
+        estimated_cost: result.estimated_cost,
+        test_status: result.test_status,
+        appointment_date: result.appointment_date,
+        follow_up_date: result.follow_up_date,
+        patient_uuid: result.patient_uuid,
+        created_at: result.created_at,
+        updated_at: result.updated_at
+      };
+      
       return {
         success: true,
-        data: result,
+        data: filteredData,
         message: 'Data created successfully'
       };
     } catch (error) {
@@ -817,9 +912,52 @@ export class SmileTestController {
   async updateSmileTestByUuid(@Param('uuid') uuid: string, @Body() data: SmileTestData) {
     try {
       const result = await this.smileTestService.saveOrUpdateByUuid(uuid, data);
+      
+      // 过滤掉大字段以提高性能
+      const filteredData = {
+        id: result.id,
+        test_id: result.test_id,
+        uuid: result.uuid,
+        full_name: result.full_name,
+        birth_date: result.birth_date,
+        phone: result.phone,
+        email: result.email,
+        line_id: result.line_id,
+        city: result.city,
+        teeth_type: result.teeth_type,
+        // 注释掉 longtext 字段以提高性能
+        // considerations: result.considerations,
+        // improvement_points: result.improvement_points,
+        // 注释掉照片字段以提高性能
+        // teeth_image_1: result.teeth_image_1,
+        // teeth_image_2: result.teeth_image_2,
+        // teeth_image_3: result.teeth_image_3,
+        // teeth_image_4: result.teeth_image_4,
+        age: result.age,
+        gender: result.gender,
+        occupation: result.occupation,
+        // address: result.address,
+        emergency_contact: result.emergency_contact,
+        emergency_phone: result.emergency_phone,
+        // dental_history: result.dental_history,
+        // current_issues: result.current_issues,
+        // allergies: result.allergies,
+        // medications: result.medications,
+        test_score: result.test_score,
+        confidence_level: result.confidence_level,
+        recommended_treatment: result.recommended_treatment,
+        estimated_cost: result.estimated_cost,
+        test_status: result.test_status,
+        appointment_date: result.appointment_date,
+        follow_up_date: result.follow_up_date,
+        patient_uuid: result.patient_uuid,
+        created_at: result.created_at,
+        updated_at: result.updated_at
+      };
+      
       return {
         success: true,
-        data: result,
+        data: filteredData,
         message: 'Data updated successfully'
       };
     } catch (error) {
@@ -839,7 +977,50 @@ export class SmileTestController {
   async updateSmileTestBio(@Param('uuid') uuid: string, @Body() body: { bio: string }) {
     try {
       const result = await this.smileTestService.updateByUuid(uuid, { considerations: body.bio });
-      return { success: true, data: result };
+      
+      // 过滤掉大字段以提高性能
+      const filteredData = {
+        id: result.id,
+        test_id: result.test_id,
+        uuid: result.uuid,
+        full_name: result.full_name,
+        birth_date: result.birth_date,
+        phone: result.phone,
+        email: result.email,
+        line_id: result.line_id,
+        city: result.city,
+        teeth_type: result.teeth_type,
+        // 注释掉 longtext 字段以提高性能
+        // considerations: result.considerations,
+        // improvement_points: result.improvement_points,
+        // 注释掉照片字段以提高性能
+        // teeth_image_1: result.teeth_image_1,
+        // teeth_image_2: result.teeth_image_2,
+        // teeth_image_3: result.teeth_image_3,
+        // teeth_image_4: result.teeth_image_4,
+        age: result.age,
+        gender: result.gender,
+        occupation: result.occupation,
+        // address: result.address,
+        emergency_contact: result.emergency_contact,
+        emergency_phone: result.emergency_phone,
+        // dental_history: result.dental_history,
+        // current_issues: result.current_issues,
+        // allergies: result.allergies,
+        // medications: result.medications,
+        test_score: result.test_score,
+        confidence_level: result.confidence_level,
+        recommended_treatment: result.recommended_treatment,
+        estimated_cost: result.estimated_cost,
+        test_status: result.test_status,
+        appointment_date: result.appointment_date,
+        follow_up_date: result.follow_up_date,
+        patient_uuid: result.patient_uuid,
+        created_at: result.created_at,
+        updated_at: result.updated_at
+      };
+      
+      return { success: true, data: filteredData };
     } catch (error) {
       throw new HttpException(
         { success: false, message: 'Failed to update bio', error: error.message },
@@ -861,9 +1042,52 @@ export class SmileTestController {
           HttpStatus.NOT_FOUND
         );
       }
+      
+      // 过滤掉大字段以提高性能
+      const filteredData = {
+        id: result.id,
+        test_id: result.test_id,
+        uuid: result.uuid,
+        full_name: result.full_name,
+        birth_date: result.birth_date,
+        phone: result.phone,
+        email: result.email,
+        line_id: result.line_id,
+        city: result.city,
+        teeth_type: result.teeth_type,
+        // 注释掉 longtext 字段以提高性能
+        // considerations: result.considerations,
+        // improvement_points: result.improvement_points,
+        // 注释掉照片字段以提高性能
+        // teeth_image_1: result.teeth_image_1,
+        // teeth_image_2: result.teeth_image_2,
+        // teeth_image_3: result.teeth_image_3,
+        // teeth_image_4: result.teeth_image_4,
+        age: result.age,
+        gender: result.gender,
+        occupation: result.occupation,
+        // address: result.address,
+        emergency_contact: result.emergency_contact,
+        emergency_phone: result.emergency_phone,
+        // dental_history: result.dental_history,
+        // current_issues: result.current_issues,
+        // allergies: result.allergies,
+        // medications: result.medications,
+        test_score: result.test_score,
+        confidence_level: result.confidence_level,
+        recommended_treatment: result.recommended_treatment,
+        estimated_cost: result.estimated_cost,
+        test_status: result.test_status,
+        appointment_date: result.appointment_date,
+        follow_up_date: result.follow_up_date,
+        patient_uuid: result.patient_uuid,
+        created_at: result.created_at,
+        updated_at: result.updated_at
+      };
+      
       return {
         success: true,
-        data: result,
+        data: filteredData,
         message: 'Data updated successfully'
       };
     } catch (error) {
