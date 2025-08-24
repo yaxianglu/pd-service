@@ -849,6 +849,16 @@ export class SmileTestController {
     try {
       const result = await this.smileTestService.create(data);
       
+      if (!result) {
+        throw new HttpException(
+          {
+            success: false,
+            message: 'Failed to create smile test'
+          },
+          HttpStatus.INTERNAL_SERVER_ERROR
+        );
+      }
+      
       // 过滤掉大字段以提高性能
       const filteredData = {
         id: result.id,
@@ -912,6 +922,16 @@ export class SmileTestController {
   async updateSmileTestByUuid(@Param('uuid') uuid: string, @Body() data: SmileTestData) {
     try {
       const result = await this.smileTestService.saveOrUpdateByUuid(uuid, data);
+      
+      if (!result) {
+        throw new HttpException(
+          {
+            success: false,
+            message: 'Failed to update smile test'
+          },
+          HttpStatus.INTERNAL_SERVER_ERROR
+        );
+      }
       
       // 过滤掉大字段以提高性能
       const filteredData = {
@@ -977,6 +997,16 @@ export class SmileTestController {
   async updateSmileTestBio(@Param('uuid') uuid: string, @Body() body: { bio: string }) {
     try {
       const result = await this.smileTestService.updateByUuid(uuid, { considerations: body.bio });
+      
+      if (!result) {
+        throw new HttpException(
+          {
+            success: false,
+            message: 'No data found to update'
+          },
+          HttpStatus.NOT_FOUND
+        );
+      }
       
       // 过滤掉大字段以提高性能
       const filteredData = {
