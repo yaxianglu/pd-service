@@ -17,6 +17,7 @@ import { AuthModule } from './auth/auth.module';
 import { SmileTestModule } from './smile-test/smile-test.module';
 import { AppointmentsModule } from './schedule/appointments.module';
 import { ClinicModule } from './clinic/clinic.module';
+import { SmileTestFilesModule } from './smile-test-files/smile-test-files.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { ClinicModule } from './clinic/clinic.module';
     SmileTestModule,
     AppointmentsModule,
     ClinicModule,
+    SmileTestFilesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

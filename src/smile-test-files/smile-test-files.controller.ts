@@ -8,14 +8,29 @@ import {
   Body, 
   Res, 
   HttpException, 
-  HttpStatus 
+  HttpStatus,
+  UseGuards
 } from '@nestjs/common';
 import { Response } from 'express';
 import { SmileTestFilesService } from './smile-test-files.service';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @Controller('api/smile-test-files')
+@UseGuards(JwtAuthGuard)
 export class SmileTestFilesController {
   constructor(private readonly smileTestFilesService: SmileTestFilesService) {}
+
+  /**
+   * 测试端点
+   */
+  @Get('test')
+  async test() {
+    return {
+      success: true,
+      message: 'API工作正常',
+      timestamp: new Date().toISOString()
+    };
+  }
 
   /**
    * 根据微笑测试UUID获取文件列表

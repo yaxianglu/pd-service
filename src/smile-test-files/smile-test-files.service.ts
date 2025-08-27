@@ -43,25 +43,156 @@ export class SmileTestFilesService {
   }
 
   /**
-   * 根据UUID查找文件
+   * 根据UUID查找文件（包括旧API的文件）
    */
   async findByUuid(uuid: string): Promise<SmileTestFiles | null> {
-    return await this.smileTestFilesRepo.findOne({ 
+    // 先尝试从新表查找
+    const newFile = await this.smileTestFilesRepo.findOne({ 
       where: { uuid, status: 'normal' } 
     });
+    
+    if (newFile) {
+      return newFile;
+    }
+
+    // 如果是旧API的文件UUID，从旧表查找
+    if (uuid.startsWith('legacy_')) {
+      const parts = uuid.split('_');
+      if (parts.length >= 3) {
+        const smileTestUuid = parts[1];
+        const fieldName = parts[2];
+        
+        const smileTest = await this.smileTestRepo.findOne({
+          where: { uuid: smileTestUuid }
+        });
+
+        if (smileTest) {
+          if (fieldName === 'allergies' && smileTest.allergies) {
+            try {
+              const allergiesData = JSON.parse(smileTest.allergies);
+              if (allergiesData && allergiesData.name && allergiesData.data) {
+                const virtualFile = new SmileTestFiles();
+                virtualFile.uuid = uuid;
+                virtualFile.smile_test_uuid = smileTestUuid;
+                virtualFile.file_name = allergiesData.name;
+                virtualFile.file_type = allergiesData.type || 'application/octet-stream';
+                virtualFile.file_data = allergiesData.data;
+                virtualFile.upload_type = 'oral_scan';
+                virtualFile.upload_time = smileTest.updated_at || smileTest.created_at;
+                virtualFile.status = 'normal';
+                virtualFile.created_at = smileTest.created_at;
+                virtualFile.updated_at = smileTest.updated_at;
+                
+                return virtualFile;
+              }
+            } catch (error) {
+              console.error('解析allergies数据失败:', error);
+            }
+          } else if (fieldName.startsWith('teeth_image_') && smileTest[fieldName]) {
+            const index = fieldName.split('_')[2];
+            const virtualFile = new SmileTestFiles();
+            virtualFile.uuid = uuid;
+            virtualFile.smile_test_uuid = smileTestUuid;
+            virtualFile.file_name = `teeth_image_${index}.jpg`;
+            virtualFile.file_type = 'image/jpeg';
+            virtualFile.file_data = smileTest[fieldName];
+            virtualFile.upload_type = 'smile_test';
+            virtualFile.upload_time = smileTest.updated_at || smileTest.created_at;
+            virtualFile.status = 'normal';
+            virtualFile.created_at = smileTest.created_at;
+            virtualFile.updated_at = smileTest.updated_at;
+            
+            return virtualFile;
+          }
+        }
+      }
+    }
+
+    return null;
   }
 
   /**
-   * 根据微笑测试UUID获取文件列表
+   * 根据微笑测试UUID获取文件列表（包括旧API的文件）
    */
   async findBySmileTestUuid(smileTestUuid: string): Promise<SmileTestFiles[]> {
-    return await this.smileTestFilesRepo.find({
+    // 从新表获取文件
+    const newFiles = await this.smileTestFilesRepo.find({
       where: { 
         smile_test_uuid: smileTestUuid, 
         status: 'normal' 
       },
       order: { upload_time: 'DESC' }
     });
+
+    // 从旧表获取文件（allergies字段和teeth_image字段）
+    const smileTest = await this.smileTestRepo.findOne({
+      where: { uuid: smileTestUuid }
+    });
+
+    const oldFiles: SmileTestFiles[] = [];
+    
+    if (smileTest) {
+      // 处理allergies文件
+      if (smileTest.allergies) {
+        try {
+          const allergiesData = JSON.parse(smileTest.allergies);
+          if (allergiesData && allergiesData.name && allergiesData.data) {
+            // 创建虚拟的SmileTestFiles对象
+            const virtualFile = new SmileTestFiles();
+            virtualFile.uuid = `legacy_${smileTestUuid}_allergies`;
+            virtualFile.smile_test_uuid = smileTestUuid;
+            virtualFile.file_name = allergiesData.name;
+            virtualFile.file_type = allergiesData.type || 'application/octet-stream';
+            virtualFile.file_data = allergiesData.data;
+            virtualFile.upload_type = 'oral_scan';
+            virtualFile.upload_time = smileTest.updated_at || smileTest.created_at;
+            virtualFile.status = 'normal';
+            virtualFile.created_at = smileTest.created_at;
+            virtualFile.updated_at = smileTest.updated_at;
+            
+            oldFiles.push(virtualFile);
+          }
+        } catch (error) {
+          console.error('解析allergies数据失败:', error);
+        }
+      }
+
+      // 处理teeth_image_1-4图片
+      const teethImageFields = ['teeth_image_1', 'teeth_image_2', 'teeth_image_3', 'teeth_image_4'];
+      teethImageFields.forEach((field, index) => {
+        const imageData = smileTest[field];
+        if (imageData) {
+          try {
+            // 创建虚拟的SmileTestFiles对象
+            const virtualFile = new SmileTestFiles();
+            virtualFile.uuid = `legacy_${smileTestUuid}_${field}`;
+            virtualFile.smile_test_uuid = smileTestUuid;
+            virtualFile.file_name = `teeth_image_${index + 1}.jpg`;
+            virtualFile.file_type = 'image/jpeg';
+            virtualFile.file_data = imageData;
+            virtualFile.upload_type = 'smile_test';
+            virtualFile.upload_time = smileTest.updated_at || smileTest.created_at;
+            virtualFile.status = 'normal';
+            virtualFile.created_at = smileTest.created_at;
+            virtualFile.updated_at = smileTest.updated_at;
+            
+            oldFiles.push(virtualFile);
+          } catch (error) {
+            console.error(`处理${field}数据失败:`, error);
+          }
+        }
+      });
+    }
+
+    // 合并并排序
+    const allFiles = [...newFiles, ...oldFiles];
+    allFiles.sort((a, b) => {
+      const dateA = new Date(a.upload_time || a.created_at);
+      const dateB = new Date(b.upload_time || b.created_at);
+      return dateB.getTime() - dateA.getTime();
+    });
+
+    return allFiles;
   }
 
   /**
