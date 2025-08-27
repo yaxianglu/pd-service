@@ -239,6 +239,46 @@ export class SmileTestFilesController {
   }
 
   /**
+   * 上传微笑测试图片组
+   */
+  @Post('smile-test/:uuid/image-group')
+  async uploadSmileTestImageGroup(
+    @Param('uuid') uuid: string,
+    @Body() data: { image_group: any }
+  ) {
+    try {
+      if (!data.image_group || !data.image_group.images) {
+        throw new Error('图片组数据不能为空');
+      }
+
+      const fileRecord = await this.smileTestFilesService.saveSmileTestImageGroup(
+        uuid,
+        data.image_group
+      );
+
+      return {
+        success: true,
+        data: {
+          uuid: fileRecord.uuid,
+          file_name: fileRecord.file_name,
+          upload_type: fileRecord.upload_type,
+          upload_time: fileRecord.upload_time
+        },
+        message: '图片组上传成功'
+      };
+    } catch (error) {
+      throw new HttpException(
+        {
+          success: false,
+          message: '图片组上传失败',
+          error: error.message
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
+  /**
    * 上传口扫文件
    */
   @Post('smile-test/:uuid/oral-scan')
