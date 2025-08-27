@@ -1,13 +1,25 @@
-const { execSync } = require('child_process');
+// 测试TypeScript编译
+const { exec } = require('child_process');
 
-try {
-  console.log('Testing TypeScript compilation...');
-  const result = execSync('npx tsc --noEmit', { encoding: 'utf8', cwd: __dirname });
-  console.log('✅ TypeScript compilation successful!');
-  console.log(result);
-} catch (error) {
-  console.log('❌ TypeScript compilation failed:');
-  console.log(error.stdout);
-  console.log(error.stderr);
-  process.exit(1);
-}
+console.log('🔍 测试TypeScript编译...');
+
+exec('npx tsc --noEmit', (error, stdout, stderr) => {
+  if (error) {
+    console.error('❌ TypeScript编译错误:');
+    console.error(stderr);
+    process.exit(1);
+  }
+  
+  if (stderr) {
+    console.warn('⚠️ TypeScript警告:');
+    console.warn(stderr);
+  }
+  
+  console.log('✅ TypeScript编译成功');
+  console.log('📝 输出:', stdout);
+  
+  console.log('\n🎉 所有实体类和模块编译成功！');
+  console.log('\n📝 下一步:');
+  console.log('1. 启动服务: npm run start:dev');
+  console.log('2. 测试API接口');
+});

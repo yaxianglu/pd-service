@@ -1,4 +1,5 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, Index } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, Index, OneToMany } from 'typeorm';
+import { SmileTestFiles } from './smile-test-files.entity';
 
 @Entity('smile_test')
 export class SmileTest {
@@ -9,7 +10,7 @@ export class SmileTest {
   @Index()
   test_id: string;
 
-  @Column('char', { length: 36, nullable: true, unique: true })
+  @Column({ type: 'varchar', length: 36, nullable: true, unique: true })
   @Index()
   uuid: string;
 
@@ -117,7 +118,7 @@ export class SmileTest {
   @Column('datetime', { nullable: true })
   follow_up_date: Date;
 
-  @Column('char', { length: 36, nullable: true })
+  @Column({ type: 'varchar', length: 36, nullable: true })
   @Index()
   patient_uuid: string;
 
@@ -140,4 +141,8 @@ export class SmileTest {
 
   @Column('timestamp', { nullable: true })
   deleted_at: Date;
+
+  // 关联关系
+  @OneToMany(() => SmileTestFiles, file => file.smileTest)
+  files: SmileTestFiles[];
 } 
