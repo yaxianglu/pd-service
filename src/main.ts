@@ -14,6 +14,7 @@ async function bootstrap() {
   app.enableCors({
     origin: '*', // React默认端口
     credentials: true,
+    exposedHeaders: ['Content-Disposition'], // 允许前端访问Content-Disposition头
   });
   
   await app.listen(process.env.APP_PORT ?? 3001); // 使用环境变量中的APP_PORT

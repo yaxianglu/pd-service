@@ -119,11 +119,24 @@ export class SmileTestFilesController {
             const zipBuffer = await zip.generateAsync({type: 'nodebuffer'});
             console.log(`✅ ZIP文件生成成功，大小: ${zipBuffer.length} bytes`);
             
+            // 生成带日期的文件名
+            const uploadDate = file.upload_time || file.created_at || new Date();
+            const dateStr = uploadDate.toISOString().split('T')[0]; // 格式: YYYY-MM-DD
+            const fileName = `微笑测试_${dateStr}.zip`;
+            
+            console.log('📅 文件名生成信息:', {
+              upload_time: file.upload_time,
+              created_at: file.created_at,
+              uploadDate: uploadDate,
+              dateStr: dateStr,
+              fileName: fileName
+            });
+            
             // 设置响应头
             res.setHeader('Content-Type', 'application/zip');
             res.setHeader(
               'Content-Disposition',
-              `attachment; filename*=UTF-8''${encodeURIComponent('微笑测试图片组.zip')}`,
+              `attachment; filename*=UTF-8''${encodeURIComponent(fileName)}`,
             );
             
             console.log('📤 发送ZIP文件...');
