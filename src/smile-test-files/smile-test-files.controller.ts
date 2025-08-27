@@ -74,14 +74,18 @@ export class SmileTestFilesController {
   @Get('download/:uuid')
   async downloadFile(@Param('uuid') uuid: string, @Res() res: Response) {
     try {
+      console.log(`尝试下载文件: ${uuid}`);
       const file = await this.smileTestFilesService.findByUuid(uuid);
       
       if (!file) {
+        console.log(`文件不存在: ${uuid}`);
         return res.status(HttpStatus.NOT_FOUND).json({
           success: false,
           message: '文件不存在'
         });
       }
+      
+      console.log(`找到文件: ${file.file_name}, 类型: ${file.file_type}`);
 
       if (!file.file_data) {
         return res.status(HttpStatus.NOT_FOUND).json({
@@ -90,15 +94,94 @@ export class SmileTestFilesController {
         });
       }
 
-      // 设置响应头
+      // 特殊处理微笑测试图片组（legacy数据）
+      if (uuid.includes('teeth_images_group') && file.upload_type === 'smile_test') {
+        console.log('🔍 开始处理微笑测试图片组下载（legacy数据）...');
+        try {
+          const imageGroup = JSON.parse(file.file_data);
+          console.log(`📊 图片组包含 ${imageGroup.images?.length || 0} 张图片`);
+          
+          if (imageGroup.images && imageGroup.images.length > 0) {
+            // 创建ZIP文件
+            const JSZip = require('jszip');
+            const zip = new JSZip();
+            
+            // 添加每张图片到ZIP
+            imageGroup.images.forEach((img, index) => {
+              if (img.data) {
+                console.log(`📸 添加图片 ${img.index} 到ZIP`);
+                // 移除data URL前缀，只保留base64数据
+                const base64Data = img.data.replace(/^data:image\/[a-z]+;base64,/, '');
+                zip.file(`teeth_image_${img.index}.jpg`, base64Data, {base64: true});
+              }
+            });
+            
+            // 生成ZIP文件
+            console.log('📦 生成ZIP文件...');
+            const zipBuffer = await zip.generateAsync({type: 'nodebuffer'});
+            console.log(`✅ ZIP文件生成成功，大小: ${zipBuffer.length} bytes`);
+            
+            // 设置响应头
+            res.setHeader('Content-Type', 'application/zip');
+            res.setHeader(
+              'Content-Disposition',
+              `attachment; filename*=UTF-8''${encodeURIComponent('微笑测试图片组.zip')}`,
+            );
+            
+            console.log('📤 发送ZIP文件...');
+            // 发送ZIP文件
+            res.send(zipBuffer);
+            return;
+          } else {
+            console.log('⚠️  图片组中没有找到图片数据');
+          }
+        } catch (error) {
+          console.error('❌ 处理微笑测试图片组失败:', error);
+          // 如果ZIP创建失败，回退到普通下载
+        }
+      }
+
+      // 普通文件下载
       res.setHeader('Content-Type', file.file_type || 'application/octet-stream');
       res.setHeader(
         'Content-Disposition',
-        `attachment; filename="${encodeURIComponent(file.file_name || 'file')}"`,
+        `attachment; filename*=UTF-8''${encodeURIComponent(file.file_name || 'file')}`,
       );
 
-      // 发送文件数据
-      res.send(file.file_data);
+      // 检查文件大小，对大文件进行特殊处理
+      const fileSize = Buffer.byteLength(file.file_data, 'utf8');
+      console.log(`📊 文件大小: ${fileSize} bytes`);
+      
+      if (fileSize > 10 * 1024 * 1024) { // 大于10MB
+        console.log('⚠️  大文件检测，使用流式下载');
+        
+        // 对于大文件，分块发送
+        const chunkSize = 1024 * 1024; // 1MB chunks
+        const chunks = Math.ceil(fileSize / chunkSize);
+        
+        for (let i = 0; i < chunks; i++) {
+          const start = i * chunkSize;
+          const end = Math.min(start + chunkSize, fileSize);
+          const chunk = file.file_data.substring(start, end);
+          
+          if (i === 0) {
+            // 第一个块
+            res.write(chunk);
+          } else {
+            // 后续块
+            res.write(chunk);
+          }
+          
+          // 添加小延迟避免阻塞
+          await new Promise(resolve => setTimeout(resolve, 10));
+        }
+        
+        res.end();
+      } else {
+        // 小文件直接发送
+        console.log('✅ 小文件，直接发送');
+        res.send(file.file_data);
+      }
     } catch (error) {
       if (!res.headersSent) {
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
