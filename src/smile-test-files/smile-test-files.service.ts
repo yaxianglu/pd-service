@@ -148,13 +148,59 @@ export class SmileTestFilesService {
    * 根据微笑测试UUID获取文件列表（包括旧API的文件）
    */
   async findBySmileTestUuid(smileTestUuid: string): Promise<SmileTestFiles[]> {
-    // 从新表获取文件
-    const newFiles = await this.smileTestFilesRepo.find({
-      where: { 
-        smile_test_uuid: smileTestUuid, 
-        status: 'normal' 
-      },
-      order: { upload_time: 'DESC' }
+    // 从新表获取文件，使用原始SQL查询确保返回所有字段
+    const rawFiles = await this.smileTestFilesRepo.query(`
+      SELECT 
+        id,
+        uuid,
+        smile_test_uuid,
+        file_name,
+        file_type,
+        file_data,
+        upload_type,
+        upload_time,
+        status,
+        created_at,
+        updated_at,
+        created_by,
+        updated_by
+      FROM smile_test_files 
+      WHERE smile_test_uuid = ? AND status = 'normal'
+      ORDER BY upload_time DESC
+    `, [smileTestUuid]);
+    
+    // 将原始数据转换为TypeORM实体对象
+    const newFiles = rawFiles.map(rawFile => {
+      console.log('🔍 原始SQL查询结果:', {
+        uuid: rawFile.uuid,
+        smile_test_uuid: rawFile.smile_test_uuid,
+        file_name: rawFile.file_name,
+        upload_type: rawFile.upload_type
+      });
+      
+      const file = new SmileTestFiles();
+      file.id = rawFile.id;
+      file.uuid = rawFile.uuid;
+      file.smile_test_uuid = rawFile.smile_test_uuid;
+      file.file_name = rawFile.file_name;
+      file.file_type = rawFile.file_type;
+      file.file_data = rawFile.file_data;
+      file.upload_type = rawFile.upload_type;
+      file.upload_time = rawFile.upload_time;
+      file.status = rawFile.status;
+      file.created_at = rawFile.created_at;
+      file.updated_at = rawFile.updated_at;
+      file.created_by = rawFile.created_by;
+      file.updated_by = rawFile.updated_by;
+      
+      console.log('🔍 转换后的实体对象:', {
+        uuid: file.uuid,
+        smile_test_uuid: file.smile_test_uuid,
+        file_name: file.file_name,
+        upload_type: file.upload_type
+      });
+      
+      return file;
     });
 
     console.log(`📊 新表中找到 ${newFiles.length} 个文件`);

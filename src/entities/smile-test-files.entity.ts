@@ -59,7 +59,7 @@ export class SmileTestFiles {
   updated_by: string;
 
   // 关联关系
-  @ManyToOne(() => SmileTest, smileTest => smileTest.files)
+  @ManyToOne(() => SmileTest, smileTest => smileTest.files, { lazy: true })
   @JoinColumn({ name: 'smile_test_uuid' })
-  smileTest: SmileTest;
+  smileTest: Promise<SmileTest>;
 }

@@ -40,6 +40,7 @@ export class SmileTestFilesController {
       // 过滤掉文件数据，只返回元数据
       const fileList = files.map(file => ({
         uuid: file.uuid,
+        smile_test_uuid: file.smile_test_uuid,
         file_name: file.file_name,
         file_type: file.file_type,
         upload_type: file.upload_type,
@@ -260,6 +261,7 @@ export class SmileTestFilesController {
         success: true,
         data: {
           uuid: fileRecord.uuid,
+          smile_test_uuid: fileRecord.smile_test_uuid,
           file_name: fileRecord.file_name,
           upload_type: fileRecord.upload_type,
           upload_time: fileRecord.upload_time
