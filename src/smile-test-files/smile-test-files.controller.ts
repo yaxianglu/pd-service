@@ -8,15 +8,12 @@ import {
   Body, 
   Res, 
   HttpException, 
-  HttpStatus,
-  UseGuards
+  HttpStatus
 } from '@nestjs/common';
 import { Response } from 'express';
 import { SmileTestFilesService } from './smile-test-files.service';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @Controller('api/smile-test-files')
-@UseGuards(JwtAuthGuard)
 export class SmileTestFilesController {
   constructor(private readonly smileTestFilesService: SmileTestFilesService) {}
 
@@ -297,6 +294,8 @@ export class SmileTestFilesController {
   @Delete(':uuid')
   async deleteFile(@Param('uuid') uuid: string) {
     try {
+      console.log(`🗑️ 删除文件请求: ${uuid}`);
+      
       const success = await this.smileTestFilesService.deleteByUuid(uuid);
       
       if (!success) {
@@ -311,6 +310,7 @@ export class SmileTestFilesController {
         message: '文件删除成功'
       };
     } catch (error) {
+      console.error('删除文件时发生错误:', error);
       throw new HttpException(
         {
           success: false,

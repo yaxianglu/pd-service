@@ -284,11 +284,15 @@ export class SmileTestFilesService {
    * 删除文件（软删除）
    */
   async deleteByUuid(uuid: string): Promise<boolean> {
+    console.log(`🗑️ 尝试删除文件: ${uuid}`);
+    
     const fileRecord = await this.findByUuid(uuid);
     if (!fileRecord) {
+      console.log('❌ 文件不存在');
       return false;
     }
 
+    console.log(`✅ 找到文件，执行软删除: ${fileRecord.file_name}`);
     fileRecord.status = 'deleted';
     await this.smileTestFilesRepo.save(fileRecord);
     return true;
