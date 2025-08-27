@@ -6,7 +6,7 @@ export class SmileTestFiles {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'varchar', length: 36, nullable: true, unique: true })
+  @Column({ type: 'varchar', length: 100, nullable: true, unique: true })
   @Index()
   uuid: string;
 
