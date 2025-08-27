@@ -307,17 +307,67 @@ export class SmileTestFilesService {
     imageData: string,
     fileName?: string
   ): Promise<SmileTestFiles> {
-    // 每次上传都创建新的记录
-    console.log(`🆕 创建新的微笑测试图片记录，索引: ${imageIndex}`);
+    console.log(`🆕 保存微笑测试图片，索引: ${imageIndex}`);
     
-    return await this.create({
-      smile_test_uuid: smileTestUuid,
-      file_name: fileName || `teeth_image_${imageIndex}.jpg`,
-      file_type: 'image/jpeg',
-      file_data: imageData,
-      upload_type: 'smile_test',
-      status: 'normal'
+    // 先查找是否已有微笑测试图片组
+    const existingGroup = await this.smileTestFilesRepo.findOne({
+      where: { 
+        smile_test_uuid: smileTestUuid, 
+        upload_type: 'smile_test',
+        status: 'normal'
+      }
     });
+    
+    if (existingGroup) {
+      console.log('📦 找到现有图片组，更新图片数据');
+      
+      // 解析现有的图片组数据
+      let imageGroup;
+      try {
+        imageGroup = JSON.parse(existingGroup.file_data);
+      } catch (error) {
+        console.log('⚠️ 现有数据格式错误，创建新的图片组');
+        imageGroup = { images: [] };
+      }
+      
+      // 更新指定索引的图片
+      const existingImageIndex = imageGroup.images.findIndex(img => img.index === imageIndex);
+      if (existingImageIndex >= 0) {
+        imageGroup.images[existingImageIndex].data = imageData;
+      } else {
+        imageGroup.images.push({
+          index: imageIndex,
+          field: `teeth_image_${imageIndex}`,
+          data: imageData
+        });
+      }
+      
+      // 更新文件数据
+      existingGroup.file_data = JSON.stringify(imageGroup);
+      existingGroup.upload_time = new Date();
+      
+      return await this.smileTestFilesRepo.save(existingGroup);
+    } else {
+      console.log('🆕 创建新的微笑测试图片组');
+      
+      // 创建新的图片组
+      const imageGroup = {
+        images: [{
+          index: imageIndex,
+          field: `teeth_image_${imageIndex}`,
+          data: imageData
+        }]
+      };
+      
+      return await this.create({
+        smile_test_uuid: smileTestUuid,
+        file_name: '微笑测试图片组',
+        file_type: 'application/json',
+        file_data: JSON.stringify(imageGroup),
+        upload_type: 'smile_test',
+        status: 'normal'
+      });
+    }
   }
 
   /**
@@ -347,6 +397,82 @@ export class SmileTestFilesService {
    */
   async getSmileTestImages(smileTestUuid: string): Promise<SmileTestFiles[]> {
     return await this.findBySmileTestUuidAndType(smileTestUuid, 'smile_test');
+  }
+
+  /**
+   * 获取微笑测试的特定图片
+   */
+  async getSmileTestImage(smileTestUuid: string, imageIndex: number): Promise<SmileTestFiles | null> {
+    console.log(`🔍 查找微笑测试图片: ${smileTestUuid}, 索引: ${imageIndex}`);
+    
+    // 先查找新表中的图片组
+    const files = await this.findBySmileTestUuidAndType(smileTestUuid, 'smile_test');
+    const imageGroup = files.find(file => file.file_name === '微笑测试图片组');
+    
+    if (imageGroup && imageGroup.file_data) {
+      console.log('📦 找到图片组，解析图片数据');
+      try {
+        const groupData = JSON.parse(imageGroup.file_data);
+        const targetImage = groupData.images?.find(img => img.index === imageIndex);
+        
+        if (targetImage && targetImage.data) {
+          console.log(`✅ 在图片组中找到索引 ${imageIndex} 的图片`);
+          
+          // 创建虚拟文件对象
+          const virtualFile = new SmileTestFiles();
+          virtualFile.uuid = `${imageGroup.uuid}_image_${imageIndex}`;
+          virtualFile.smile_test_uuid = smileTestUuid;
+          virtualFile.file_name = `teeth_image_${imageIndex}.jpg`;
+          virtualFile.file_type = 'image/jpeg';
+          virtualFile.file_data = targetImage.data;
+          virtualFile.upload_type = 'smile_test';
+          virtualFile.upload_time = imageGroup.upload_time;
+          virtualFile.status = 'normal';
+          virtualFile.created_at = imageGroup.created_at;
+          virtualFile.updated_at = imageGroup.updated_at;
+          
+          return virtualFile;
+        }
+      } catch (error) {
+        console.error('解析图片组数据失败:', error);
+      }
+    }
+    
+    // 如果新表中没有，查找legacy数据
+    console.log('🔍 新表中没有找到，查找legacy数据...');
+    const smileTest = await this.smileTestRepo.findOne({
+      where: { uuid: smileTestUuid }
+    });
+    
+    if (!smileTest) {
+      console.log('❌ 没有找到微笑测试记录');
+      return null;
+    }
+    
+    const fieldName = `teeth_image_${imageIndex}`;
+    const legacyData = smileTest[fieldName];
+    
+    if (!legacyData) {
+      console.log(`❌ Legacy数据中没有找到 ${fieldName}`);
+      return null;
+    }
+    
+    console.log(`✅ 在legacy数据中找到图片: ${fieldName}`);
+    
+    // 创建虚拟文件对象
+    const virtualFile = new SmileTestFiles();
+    virtualFile.uuid = `legacy_${smileTestUuid}_${fieldName}`;
+    virtualFile.smile_test_uuid = smileTestUuid;
+    virtualFile.file_name = `teeth_image_${imageIndex}.jpg`;
+    virtualFile.file_type = 'image/jpeg';
+    virtualFile.file_data = legacyData;
+    virtualFile.upload_type = 'smile_test';
+    virtualFile.upload_time = smileTest.updated_at || smileTest.created_at;
+    virtualFile.status = 'normal';
+    virtualFile.created_at = smileTest.created_at;
+    virtualFile.updated_at = smileTest.updated_at;
+    
+    return virtualFile;
   }
 
   /**

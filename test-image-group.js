@@ -1,159 +1,120 @@
 const axios = require('axios');
 
-const API_BASE_URL = 'http://localhost:3001';
+const BASE_URL = 'http://localhost:3001';
 
-// 登录获取token
-async function login() {
+async function testImageGroupUpload() {
   try {
-    console.log('🔐 尝试登录获取token...');
+    console.log('🧪 测试图片组上传...');
     
-    const loginData = {
-      username: 'pearl_admin_2025',
-      password: 'P@rlD1g1t@l2024!'
-    };
+    const smileTestUuid = 'b0af75af-ccb4-4a51-894a-8e8a11a4a193';
     
-    const response = await axios.post(`${API_BASE_URL}/auth/login`, loginData);
+    // 创建一个简单的测试图片数据（base64编码的1x1像素PNG）
+    const testImageData = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
     
-    if (response.data.success) {
-      console.log('✅ 登录成功');
-      return response.data.data.token;
-    } else {
-      console.log('❌ 登录失败:', response.data.message);
-      return null;
-    }
-    
-  } catch (error) {
-    console.error('❌ 登录请求失败:', error.message);
-    return null;
-  }
-}
-
-// 测试获取文件列表（应该只显示一个微笑测试图片组）
-async function testGetFileList(token) {
-  try {
-    console.log('\n🔍 测试获取文件列表（图片组）...');
-    
-    const smileTestUuid = '30772a78-1a74-4601-b61a-341ac6ba02fa';
-    const url = `${API_BASE_URL}/api/smile-test-files/smile-test/${smileTestUuid}`;
-    
-    console.log('请求URL:', url);
-    
-    const response = await axios.get(url, {
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      }
-    });
-    
-    console.log('✅ 文件列表获取成功:');
-    console.log('状态码:', response.status);
-    console.log('文件数量:', response.data.data?.length || 0);
-    
-    if (response.data.data && response.data.data.length > 0) {
-      console.log('\n📋 文件列表:');
-      response.data.data.forEach((file, index) => {
-        console.log(`${index + 1}. ${file.file_name} (${file.upload_type}) - ${file.uuid}`);
+    // 上传4张图片，应该都保存到同一个图片组中
+    for (let i = 1; i <= 4; i++) {
+      console.log(`📝 上传图片 ${i}...`);
+      
+      const response = await axios.post(`${BASE_URL}/api/smile-test-files/smile-test/${smileTestUuid}/image/${i}`, {
+        image_data: testImageData
       });
       
-      // 检查是否有微笑测试图片组
-      const smileTestGroup = response.data.data.find(file => 
-        file.uuid.includes('teeth_images_group') && file.upload_type === 'smile_test'
-      );
-      
-      if (smileTestGroup) {
-        console.log('\n✅ 找到微笑测试图片组:', smileTestGroup.file_name);
-        return smileTestGroup.uuid;
-      } else {
-        console.log('\n⚠️  没有找到微笑测试图片组');
-      }
-    } else {
-      console.log('⚠️  没有找到文件');
+      console.log(`✅ 图片 ${i} 上传响应:`, {
+        success: response.data.success,
+        message: response.data.message,
+        fileName: response.data.data?.file_name
+      });
     }
     
   } catch (error) {
-    console.error('❌ 获取文件列表失败:', error.message);
-    if (error.response) {
-      console.error('错误信息:', error.response.data);
-    }
+    console.log('❌ 上传错误:', error.response?.data || error.message);
   }
-  
-  return null;
 }
 
-// 测试下载微笑测试图片组
-async function testDownloadImageGroup(token, groupUuid) {
+async function testGetFileList() {
   try {
-    console.log(`\n🔍 测试下载微笑测试图片组: ${groupUuid}`);
+    console.log('\n🧪 测试获取文件列表...');
     
-    const url = `${API_BASE_URL}/api/smile-test-files/download/${groupUuid}`;
-    console.log('请求URL:', url);
+    const smileTestUuid = 'b0af75af-ccb4-4a51-894a-8e8a11a4a193';
     
-    const response = await axios.get(url, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      },
-      responseType: 'arraybuffer',
-      validateStatus: function (status) {
-        return status < 500; // 接受所有状态码以便调试
-      }
+    const response = await axios.get(`${BASE_URL}/api/smile-test-files/smile-test/${smileTestUuid}`);
+    
+    console.log('✅ 文件列表响应:', {
+      success: response.data.success,
+      message: response.data.message,
+      fileCount: response.data.data?.length || 0,
+      files: response.data.data?.map(f => ({
+        uuid: f.uuid,
+        fileName: f.file_name,
+        type: f.upload_type,
+        uploadTime: f.upload_time
+      }))
     });
     
-    console.log('响应状态码:', response.status);
-    console.log('Content-Type:', response.headers['content-type']);
-    console.log('Content-Disposition:', response.headers['content-disposition']);
-    
-    if (response.status === 200) {
-      console.log('✅ 下载成功');
-      console.log('文件大小:', response.data.length, 'bytes');
-      
-      // 检查是否是ZIP文件
-      if (response.headers['content-type'] === 'application/zip') {
-        console.log('✅ 确认是ZIP文件格式');
-      } else {
-        console.log('⚠️  不是ZIP文件格式');
-      }
-    } else {
-      console.log('❌ 下载失败');
-      if (response.headers['content-type']?.includes('application/json')) {
-        const errorData = JSON.parse(response.data.toString());
-        console.log('错误信息:', errorData);
-      }
-    }
-    
   } catch (error) {
-    console.error('❌ 请求失败:', error.message);
-    
-    if (error.response) {
-      console.error('状态码:', error.response.status);
-      if (error.response.headers['content-type']?.includes('application/json')) {
-        const errorData = JSON.parse(error.response.data.toString());
-        console.error('错误信息:', errorData);
-      }
-    }
+    console.log('❌ 获取文件列表错误:', error.response?.data || error.message);
   }
 }
 
-// 主函数
+async function testGetSpecificImage() {
+  try {
+    console.log('\n🧪 测试获取特定图片...');
+    
+    const smileTestUuid = 'b0af75af-ccb4-4a51-894a-8e8a11a4a193';
+    
+    // 获取图片2
+    const response = await axios.get(`${BASE_URL}/api/smile-test-files/smile-test/${smileTestUuid}/image/2`);
+    
+    console.log('✅ 获取特定图片响应:', {
+      success: response.data.success,
+      message: response.data.message,
+      hasData: !!response.data.data,
+      fileName: response.data.data?.file_name,
+      dataLength: response.data.data?.file_data?.length || 0
+    });
+    
+  } catch (error) {
+    console.log('❌ 获取特定图片错误:', error.response?.data || error.message);
+  }
+}
+
+async function testDownloadImageGroup() {
+  try {
+    console.log('\n🧪 测试下载图片组...');
+    
+    // 先获取文件列表，找到图片组的UUID
+    const smileTestUuid = 'b0af75af-ccb4-4a51-894a-8e8a11a4a193';
+    const listResponse = await axios.get(`${BASE_URL}/api/smile-test-files/smile-test/${smileTestUuid}`);
+    
+    const imageGroup = listResponse.data.data?.find(f => f.file_name === '微笑测试图片组');
+    
+    if (imageGroup) {
+      console.log(`📝 下载图片组: ${imageGroup.uuid}`);
+      
+      const response = await axios.get(`${BASE_URL}/api/smile-test-files/download/${imageGroup.uuid}`, {
+        responseType: 'arraybuffer'
+      });
+      
+      console.log('✅ 下载图片组响应:', {
+        status: response.status,
+        contentType: response.headers['content-type'],
+        contentLength: response.headers['content-length'],
+        dataLength: response.data.length
+      });
+    } else {
+      console.log('⚠️ 没有找到图片组');
+    }
+    
+  } catch (error) {
+    console.log('❌ 下载图片组错误:', error.response?.status, error.response?.statusText);
+  }
+}
+
 async function main() {
-  console.log('🚀 开始测试微笑测试图片组功能...\n');
-  
-  // 先登录获取token
-  const token = await login();
-  
-  if (!token) {
-    console.log('❌ 无法获取认证token，测试终止');
-    return;
-  }
-  
-  // 测试获取文件列表
-  const groupUuid = await testGetFileList(token);
-  
-  // 测试下载图片组
-  if (groupUuid) {
-    await testDownloadImageGroup(token, groupUuid);
-  }
-  
-  console.log('\n📝 测试完成');
+  await testImageGroupUpload();
+  await testGetFileList();
+  await testGetSpecificImage();
+  await testDownloadImageGroup();
 }
 
 main().catch(console.error);

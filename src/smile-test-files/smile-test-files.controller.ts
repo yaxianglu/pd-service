@@ -91,9 +91,9 @@ export class SmileTestFilesController {
         });
       }
 
-      // 特殊处理微笑测试图片组（legacy数据）
-      if (uuid.includes('teeth_images_group') && file.upload_type === 'smile_test') {
-        console.log('🔍 开始处理微笑测试图片组下载（legacy数据）...');
+      // 特殊处理微笑测试图片组
+      if (file.file_name === '微笑测试图片组' && file.upload_type === 'smile_test') {
+        console.log('🔍 开始处理微笑测试图片组下载...');
         try {
           const imageGroup = JSON.parse(file.file_data);
           console.log(`📊 图片组包含 ${imageGroup.images?.length || 0} 张图片`);
@@ -349,6 +349,51 @@ export class SmileTestFilesController {
         {
           success: false,
           message: '获取图片列表失败',
+          error: error.message
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
+  /**
+   * 获取微笑测试的特定图片
+   */
+  @Get('smile-test/:uuid/image/:index')
+  async getSmileTestImage(@Param('uuid') uuid: string, @Param('index') index: string) {
+    try {
+      const imageIndex = parseInt(index);
+      if (isNaN(imageIndex) || imageIndex < 1 || imageIndex > 4) {
+        throw new Error('图片索引必须在1-4之间');
+      }
+
+      const image = await this.smileTestFilesService.getSmileTestImage(uuid, imageIndex);
+      
+      if (!image) {
+        return {
+          success: false,
+          message: '没有找到指定图片'
+        };
+      }
+
+      // 返回图片数据
+      return {
+        success: true,
+        data: {
+          uuid: image.uuid,
+          file_name: image.file_name,
+          file_type: image.file_type,
+          file_data: image.file_data,
+          upload_time: image.upload_time,
+          created_at: image.created_at
+        },
+        message: '获取图片成功'
+      };
+    } catch (error) {
+      throw new HttpException(
+        {
+          success: false,
+          message: '获取图片失败',
           error: error.message
         },
         HttpStatus.INTERNAL_SERVER_ERROR
