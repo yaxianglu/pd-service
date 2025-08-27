@@ -29,6 +29,7 @@ CREATE TABLE `pd`.smile_test (
     teeth_image_2 LONGTEXT NULL COMMENT '牙齿图片2路径 (base64编码)',
     teeth_image_3 LONGTEXT NULL COMMENT '牙齿图片3路径 (base64编码)',
     teeth_image_4 LONGTEXT NULL COMMENT '牙齿图片4路径 (base64编码)',
+    allergies TEXT NULL COMMENT '过敏史',
     
     -- 备用字段
     age INT NULL COMMENT '年龄',
@@ -41,7 +42,6 @@ CREATE TABLE `pd`.smile_test (
     -- 牙齿健康信息
     dental_history TEXT NULL COMMENT '牙齿治疗历史',
     current_issues TEXT NULL COMMENT '当前牙齿问题',
-    allergies TEXT NULL COMMENT '过敏史',
     medications TEXT NULL COMMENT '正在服用的药物',
     
     -- 测试结果
