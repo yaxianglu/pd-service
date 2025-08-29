@@ -79,19 +79,16 @@
 - `GET /auth/users` - 获取用户列表
 - `POST /auth/users` - 创建用户
 - `DELETE /auth/users/:id` - 删除用户
-- `PUT /auth/users/:id/status` - 更新用户状态
 
 ### 诊所管理接口
 - `GET /auth/clinics` - 获取诊所列表
 - `POST /auth/clinics` - 创建诊所
 - `DELETE /auth/clinics/:id` - 删除诊所
-- `PUT /auth/clinics/:id/status` - 更新诊所状态
 
 ### 患者管理接口
 - `GET /auth/patients` - 获取患者列表
 - `POST /auth/patients` - 创建患者
 - `DELETE /auth/patients/:id` - 删除患者
-- `PUT /auth/patients/:id/status` - 更新患者状态
 
 ## 修复记录
 

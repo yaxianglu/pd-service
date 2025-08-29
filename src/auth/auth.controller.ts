@@ -114,9 +114,12 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async createAdminUser(@Body() body: any) {
     const { username, password, email, phone, full_name, role = 'doctor', department } = body || {};
-    if (!username || !password) {
-      throw new BadRequestException('缺少必要字段：username 或 password');
+    if (!username) {
+      throw new BadRequestException('缺少必要字段：username');
     }
+
+    // 如果没有提供密码，使用默认密码
+    const finalPassword = password || 'pd2025!';
 
     // 唯一性校验
     const existing = await this.adminUserRepository.findOne({ where: { username } });
@@ -133,7 +136,7 @@ export class AuthController {
     }
 
     // 存储规则：沿用登录逻辑，若前端发送 SHA-256 字符串，则以 'hashed_' 前缀保存
-    const storedPassword = password.length === 64 ? `hashed_${password}` : password;
+    const storedPassword = finalPassword.length === 64 ? `hashed_${finalPassword}` : finalPassword;
 
     const user = this.adminUserRepository.create({
       username,
@@ -414,83 +417,5 @@ export class AuthController {
     return { success: true, message: '患者已關閉' };
   }
 
-  // 更新用户状态（激活/停用）
-  @Put('users/:id/status')
-  @UseGuards(JwtAuthGuard)
-  @HttpCode(HttpStatus.OK)
-  async updateUserStatus(@Request() req, @Body() body: { status: string }) {
-    const { id } = req.params;
-    const { status } = body;
-    
-    if (!id || !status) {
-      throw new BadRequestException('缺少必要字段：id 或 status');
-    }
 
-    const user = await this.adminUserRepository.findOne({ where: { id: parseInt(id), is_deleted: 0 } as any });
-    if (!user) {
-      throw new BadRequestException('用戶不存在或已被刪除');
-    }
-
-    await this.adminUserRepository.update(parseInt(id), { status } as any);
-    return { success: true, message: '用戶狀態已更新' };
-  }
-
-  // 更新诊所状态
-  @Put('clinics/:id/status')
-  @UseGuards(JwtAuthGuard)
-  @HttpCode(HttpStatus.OK)
-  async updateClinicStatus(@Request() req, @Body() body: { status: string }) {
-    const { id } = req.params;
-    const { status } = body;
-    
-    if (!id || !status) {
-      throw new BadRequestException('缺少必要字段：id 或 status');
-    }
-
-    const clinic = await this.clinicRepository.findOne({ where: { id: parseInt(id), is_deleted: 0 } as any });
-    if (!clinic) {
-      throw new BadRequestException('診所不存在或已被刪除');
-    }
-
-    await this.clinicRepository.update(parseInt(id), { status } as any);
-    return { success: true, message: '診所狀態已更新' };
-  }
-
-  // 更新患者状态（smile_test表）
-  @Put('patients/:id/status')
-  @UseGuards(JwtAuthGuard)
-  @HttpCode(HttpStatus.OK)
-  async updatePatientStatus(@Request() req, @Body() body: { status: string }) {
-    const { id } = req.params;
-    const { status } = body;
-    
-    if (!id || !status) {
-      throw new BadRequestException('缺少必要字段：id 或 status');
-    }
-
-    // 检查患者是否存在
-    const [patient] = await this.adminUserRepository.query(`
-      SELECT id, full_name FROM smile_test WHERE id = ? AND is_deleted = 0
-    `, [parseInt(id)]);
-    
-    if (!patient) {
-      throw new BadRequestException('患者不存在或已被刪除');
-    }
-
-    // 更新状态（将status映射到test_status）
-    const testStatusMap = {
-      'active': 'pending',
-      'inactive': 'cancelled',
-      'suspended': 'cancelled',
-      'discharged': 'completed'
-    };
-
-    await this.adminUserRepository.query(`
-      UPDATE smile_test 
-      SET test_status = ?
-      WHERE id = ?
-    `, [testStatusMap[status] || status, parseInt(id)]);
-
-    return { success: true, message: '患者狀態已更新' };
-  }
 } 
