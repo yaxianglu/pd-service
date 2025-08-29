@@ -7,10 +7,11 @@ import { AuthService } from './auth.service';
 import { JwtStrategy } from './jwt.strategy';
 import { AdminUser } from '../entities/admin-user.entity';
 import { Clinic } from '../entities/clinic.entity';
+import { Patient } from '../entities/patient.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([AdminUser, Clinic]),
+    TypeOrmModule.forFeature([AdminUser, Clinic, Patient]),
     PassportModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'your-secret-key-change-in-production',
