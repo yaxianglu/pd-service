@@ -82,11 +82,44 @@ export class SmileTestController {
       if (!patient) {
         return { success: false, message: 'Patient not found' };
       }
+
+      // 特殊处理：当progress为1时（预约完成），只有在待预约状态下才允许更新
+      if (progress === 1) {
+        const currentProgress = Number(patient.treatment_progress || 0);
+        if (currentProgress > 0) {
+          return { 
+            success: false, 
+            message: `当前进度为 ${currentProgress}，不能重置为预约完成状态`,
+            data: { 
+              uuid, 
+              current_progress: currentProgress,
+              requested_progress: progress,
+              current_status: this.getProgressDescription(currentProgress),
+              requested_status: '预约完成'
+            }
+          };
+        }
+      }
+
       (patient as any).treatment_progress = progress as any;
       await this.patientRepo.save(patient);
       return { success: true, data: { uuid, treatment_progress: progress } };
     } catch (error) {
       throw new HttpException({ success: false, message: 'Failed to update progress', error: (error as any)?.message }, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  // 获取进度描述
+  private getProgressDescription(progress: number): string {
+    switch (progress) {
+      case 0: return '待预约';
+      case 1: return '预约完成';
+      case 2: return '确认方案';
+      case 3: return '付款完成';
+      case 4: return '生产完成';
+      case 5: return '治疗中';
+      case 6: return '治疗完成';
+      default: return '未知状态';
     }
   }
 
