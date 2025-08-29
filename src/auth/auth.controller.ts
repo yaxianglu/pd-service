@@ -6,7 +6,7 @@ import { Repository, In } from 'typeorm';
 import { AdminUser } from '../entities/admin-user.entity';
 import { Clinic } from '../entities/clinic.entity';
 import { Patient } from '../entities/patient.entity';
-import * as crypto from 'crypto';
+import { randomUUID } from 'crypto';
 
 @Controller('auth')
 export class AuthController {
@@ -238,7 +238,7 @@ export class AuthController {
     }
 
     // 生成UUID
-    const uuid = crypto.randomUUID();
+    const uuid = randomUUID();
 
     const clinic = this.clinicRepository.create({
       uuid,
@@ -273,7 +273,7 @@ export class AuthController {
     }
 
     // 生成UUID
-    const uuid = crypto.randomUUID();
+    const uuid = randomUUID();
 
     // 直接插入到smile_test表
     const result = await this.adminUserRepository.query(`
