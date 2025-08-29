@@ -12,7 +12,7 @@ const passwords = [
   '123456',
   'admin',
   'henrycao',
-  'Shein@123'
+  'duisdui@123'
 ];
 
 console.log('🔍 生成密码哈希...\n');
@@ -41,7 +41,7 @@ const commonPasswords = [
   '123456',
   'admin',
   'henrycao',
-  'Shein@123',
+  'duisdui@123',
   'henrycao123',
   'admin@123',
   'password123',

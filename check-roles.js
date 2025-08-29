@@ -4,7 +4,7 @@ async function checkRoles() {
   const connection = await mysql.createConnection({
     host: 'localhost',
     user: 'root',
-    password: 'Shein@123',
+    password: 'duisdui@123',
     database: 'pd'
   });
 

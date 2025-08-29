@@ -5,7 +5,7 @@ async function checkDatabase() {
     host: 'localhost',
     port: 3306,
     user: 'root',
-    password: 'Shein@123',
+    password: 'duisdui@123',
     database: 'pd'
   });
 

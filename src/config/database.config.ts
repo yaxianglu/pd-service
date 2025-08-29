@@ -12,7 +12,7 @@ export const databaseConfig: TypeOrmModuleOptions = {
 
   host: 'localhost',
   username: 'root',
-  password: 'Shein@123',
+  password: 'duisdui@123',
   port: 3306,
   database: 'pd',
   entities: [__dirname + '/../**/*.entity{.ts,.js}'],

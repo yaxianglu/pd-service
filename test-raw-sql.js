@@ -3,7 +3,7 @@ const mysql = require('mysql2/promise');
 const config = {
   host: 'localhost',
   user: 'root',
-  password: 'Shein@123',
+  password: 'duisdui@123',
   database: 'pd',
   charset: 'utf8mb4'
 };
