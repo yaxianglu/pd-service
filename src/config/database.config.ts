@@ -6,13 +6,13 @@ const resetDatabase = process.env.RESET_DATABASE === 'true';
 
 export const databaseConfig: TypeOrmModuleOptions = {
   type: 'mysql',
-  // host: 'pd-db-new.cgbiaakssebs.us-east-1.rds.amazonaws.com',
-  // username: 'henrycao',
-  // password: 'Pearl#89$Hc!',
+  host: 'pd-db-new.cgbiaakssebs.us-east-1.rds.amazonaws.com',
+  username: 'henrycao',
+  password: 'Pearl#89$Hc!',
 
-  host: 'localhost',
-  username: 'root',
-  password: 'duisdui@123',
+  // host: 'localhost',
+  // username: 'root',
+  // password: 'duisdui@123',
   port: 3306,
   database: 'pd',
   entities: [__dirname + '/../**/*.entity{.ts,.js}'],
