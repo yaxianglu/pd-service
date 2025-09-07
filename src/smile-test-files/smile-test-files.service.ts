@@ -355,13 +355,14 @@ export class SmileTestFilesService {
   ): Promise<SmileTestFiles> {
     console.log(`🆕 保存微笑测试图片，索引: ${imageIndex}`);
     
-    // 先查找是否已有微笑测试图片组
+    // 先查找是否已有微笑测试图片组（按创建时间降序，取最新的）
     const existingGroup = await this.smileTestFilesRepo.findOne({
       where: { 
         smile_test_uuid: smileTestUuid, 
         upload_type: 'smile_test',
         status: 'normal'
-      }
+      },
+      order: { created_at: 'DESC' }
     });
     
     if (existingGroup) {
@@ -425,17 +426,36 @@ export class SmileTestFilesService {
   ): Promise<SmileTestFiles> {
     console.log(`🆕 保存微笑测试图片组，包含 ${imageGroup.images?.length || 0} 张图片`);
     
-    // 每次上传都创建新的记录，不覆盖现有文件
-    console.log('🆕 创建新的微笑测试图片组记录');
-    
-    return await this.create({
-      smile_test_uuid: smileTestUuid,
-      file_name: '微笑测试图片组',
-      file_type: 'application/json',
-      file_data: JSON.stringify(imageGroup),
-      upload_type: 'smile_test',
-      status: 'normal'
+    // 先查找是否已有微笑测试图片组（按创建时间降序，取最新的）
+    const existingGroup = await this.smileTestFilesRepo.findOne({
+      where: { 
+        smile_test_uuid: smileTestUuid, 
+        upload_type: 'smile_test',
+        status: 'normal'
+      },
+      order: { created_at: 'DESC' }
     });
+    
+    if (existingGroup) {
+      console.log('📦 找到现有图片组，更新图片组数据');
+      
+      // 更新文件数据
+      existingGroup.file_data = JSON.stringify(imageGroup);
+      existingGroup.upload_time = new Date();
+      
+      return await this.smileTestFilesRepo.save(existingGroup);
+    } else {
+      console.log('🆕 创建新的微笑测试图片组记录');
+      
+      return await this.create({
+        smile_test_uuid: smileTestUuid,
+        file_name: '微笑测试图片组',
+        file_type: 'application/json',
+        file_data: JSON.stringify(imageGroup),
+        upload_type: 'smile_test',
+        status: 'normal'
+      });
+    }
   }
 
   /**
