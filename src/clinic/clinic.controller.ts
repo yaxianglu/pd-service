@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, UseGuards, HttpException, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Put, Body, Param, UseGuards, HttpException, HttpStatus } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Clinic, ClinicStatus } from '../entities/clinic.entity';
@@ -88,6 +88,49 @@ export class ClinicController {
       throw new HttpException({ 
         success: false, 
         message: '創建診所失敗' 
+      }, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  // 更新诊所信息
+  @Put(':uuid')
+  @UseGuards(JwtAuthGuard)
+  async updateClinic(@Param('uuid') uuid: string, @Body() updateData: any) {
+    try {
+      console.log('更新诊所信息:', { uuid, updateData });
+      
+      // 查找诊所
+      const clinic = await this.clinicRepository.findOne({ 
+        where: { uuid, is_deleted: 0 } as any 
+      });
+      
+      if (!clinic) {
+        throw new HttpException({ 
+          success: false, 
+          message: '診所不存在' 
+        }, HttpStatus.NOT_FOUND);
+      }
+
+      // 更新诊所信息
+      const updatedClinic = await this.clinicRepository.save({
+        ...clinic,
+        ...updateData,
+        updated_at: new Date()
+      });
+
+      return { 
+        success: true, 
+        data: updatedClinic, 
+        message: '診所信息更新成功' 
+      };
+    } catch (error) {
+      console.error('更新诊所信息失败:', error);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new HttpException({ 
+        success: false, 
+        message: '更新診所信息失敗' 
       }, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
