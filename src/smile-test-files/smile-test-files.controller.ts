@@ -314,6 +314,15 @@ export class SmileTestFilesController {
         throw new Error('文件名不能为空');
       }
 
+      // 检查文件大小（base64编码会增加33%大小）
+      const base64Data = data.file_data.replace(/^data:.*,/, '');
+      const fileSizeInBytes = (base64Data.length * 3) / 4;
+      const maxSize = 200 * 1024 * 1024; // 200MB
+
+      if (fileSizeInBytes > maxSize) {
+        throw new Error(`文件大小超过限制。当前大小: ${Math.round(fileSizeInBytes / 1024 / 1024)}MB，最大允许: ${maxSize / 1024 / 1024}MB`);
+      }
+
       const fileRecord = await this.smileTestFilesService.saveOralScanFile(
         uuid,
         data.file_data,
@@ -327,7 +336,8 @@ export class SmileTestFilesController {
           uuid: fileRecord.uuid,
           file_name: fileRecord.file_name,
           upload_type: fileRecord.upload_type,
-          upload_time: fileRecord.upload_time
+          upload_time: fileRecord.upload_time,
+          file_size: fileSizeInBytes
         },
         message: '口扫文件上传成功'
       };
