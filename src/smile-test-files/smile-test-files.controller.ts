@@ -152,7 +152,36 @@ export class SmileTestFilesController {
         }
       }
 
-      // 普通文件下载
+      // 普通文件下载（包括口扫文件）
+      // 检查是否为 data URL 格式（base64 编码）
+      let fileBuffer: Buffer;
+      if (file.file_data.startsWith('data:')) {
+        // 提取 base64 数据部分
+        const base64Match = file.file_data.match(/^data:[^;]+;base64,(.+)$/);
+        if (base64Match && base64Match[1]) {
+          console.log('📦 检测到 data URL 格式，解码为二进制数据');
+          fileBuffer = Buffer.from(base64Match[1], 'base64');
+          console.log(`✅ Base64 解码成功，二进制大小: ${fileBuffer.length} bytes`);
+        } else {
+          // 如果没有匹配到 base64，尝试直接提取逗号后的部分
+          const commaIndex = file.file_data.indexOf(',');
+          if (commaIndex >= 0) {
+            const base64Data = file.file_data.substring(commaIndex + 1);
+            fileBuffer = Buffer.from(base64Data, 'base64');
+            console.log(`✅ 提取 base64 数据并解码，二进制大小: ${fileBuffer.length} bytes`);
+          } else {
+            // 如果不是 data URL 格式，直接当作字符串处理
+            console.log('⚠️  无法解析 data URL，使用原始字符串');
+            fileBuffer = Buffer.from(file.file_data, 'utf8');
+          }
+        }
+      } else {
+        // 不是 data URL 格式，直接使用原始数据
+        console.log('📄 非 data URL 格式，直接使用原始数据');
+        fileBuffer = Buffer.from(file.file_data, 'utf8');
+      }
+
+      // 设置响应头
       res.setHeader('Content-Type', file.file_type || 'application/octet-stream');
       res.setHeader(
         'Content-Disposition',
@@ -160,7 +189,7 @@ export class SmileTestFilesController {
       );
 
       // 检查文件大小，对大文件进行特殊处理
-      const fileSize = Buffer.byteLength(file.file_data, 'utf8');
+      const fileSize = fileBuffer.length;
       console.log(`📊 文件大小: ${fileSize} bytes`);
       
       if (fileSize > 10 * 1024 * 1024) { // 大于10MB
@@ -173,7 +202,7 @@ export class SmileTestFilesController {
         for (let i = 0; i < chunks; i++) {
           const start = i * chunkSize;
           const end = Math.min(start + chunkSize, fileSize);
-          const chunk = file.file_data.substring(start, end);
+          const chunk = fileBuffer.slice(start, end);
           
           if (i === 0) {
             // 第一个块
@@ -189,9 +218,9 @@ export class SmileTestFilesController {
         
         res.end();
       } else {
-        // 小文件直接发送
-        console.log('✅ 小文件，直接发送');
-        res.send(file.file_data);
+        // 小文件直接发送二进制数据
+        console.log('✅ 小文件，直接发送二进制数据');
+        res.send(fileBuffer);
       }
     } catch (error) {
       if (!res.headersSent) {
