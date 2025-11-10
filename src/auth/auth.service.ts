@@ -345,4 +345,56 @@ export class AuthService {
       };
     }
   }
+
+  // 更新用户个人信息
+  async updateProfile(userId: number, updateData: { phone?: string; email?: string }) {
+    try {
+      // 获取用户信息
+      const user = await this.adminUserRepository.findOne({ where: { id: userId, is_deleted: 0 } });
+      if (!user) {
+        return {
+          success: false,
+          message: '用戶不存在',
+        };
+      }
+
+      // 构建更新数据
+      const updateFields: any = {
+        updated_at: new Date(),
+      };
+
+      if (updateData.phone !== undefined) {
+        updateFields.phone = updateData.phone || null;
+      }
+
+      if (updateData.email !== undefined) {
+        updateFields.email = updateData.email || null;
+      }
+
+      // 更新用户信息
+      await this.adminUserRepository.update(userId, updateFields);
+
+      // 获取更新后的用户信息
+      const updatedUser = await this.adminUserRepository.findOne({
+        where: { id: userId, is_deleted: 0 },
+        select: [
+          'id', 'user_id', 'username', 'email', 'full_name', 'phone',
+          'role', 'department', 'position', 'status', 'avatar', 'bio',
+          'timezone', 'language', 'theme', 'created_at', 'last_login_at'
+        ]
+      });
+
+      return {
+        success: true,
+        message: '個人信息更新成功',
+        data: updatedUser,
+      };
+    } catch (error) {
+      console.error('Update profile error:', error);
+      return {
+        success: false,
+        message: '個人信息更新失敗',
+      };
+    }
+  }
 } 

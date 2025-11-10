@@ -8,7 +8,7 @@ import { Clinic } from '../entities/clinic.entity';
 import { Patient } from '../entities/patient.entity';
 import { randomUUID } from 'crypto';
 
-@Controller('auth')
+@Controller('api/auth')
 export class AuthController {
   constructor(
     private authService: AuthService,
@@ -170,6 +170,24 @@ export class AuthController {
     }
 
     return this.authService.changePassword(req.user.id, currentPassword, newPassword);
+  }
+
+  // 更新用户个人信息（联系方式、邮箱）
+  @Put('profile')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  async updateProfile(@Request() req, @Body() body: { phone?: string; email?: string }) {
+    const { phone, email } = body;
+    
+    // 验证邮箱格式（如果提供）
+    if (email && email !== '') {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        throw new BadRequestException('郵箱格式不正確');
+      }
+    }
+
+    return this.authService.updateProfile(req.user.id, { phone, email });
   }
 
   // ========== 账户管理功能 ==========
