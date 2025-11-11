@@ -31,9 +31,11 @@ export class SmileTestController {
         line_id: item.line_id,
         city: item.city,
         teeth_type: item.teeth_type,
-        // 注释掉照片字段以提高性能
-        // considerations: item.considerations,
-        // improvement_points: item.improvement_points,
+        // 用户备注信息（使用 considerations 字段存储）
+        bio: item.considerations,
+        considerations: item.considerations,
+        // 注释掉其他字段以提高性能
+        improvement_points: item.improvement_points,
         // teeth_image_1: item.teeth_image_1,
         // teeth_image_2: item.teeth_image_2,
         // teeth_image_3: item.teeth_image_3,
@@ -166,9 +168,11 @@ export class SmileTestController {
             line_id: result.smileTest.line_id,
             city: result.smileTest.city,
             teeth_type: result.smileTest.teeth_type,
-            // 注释掉 longtext 字段以提高性能
-            // considerations: result.smileTest.considerations,
-            // improvement_points: result.smileTest.improvement_points,
+            // 用户备注信息（使用 considerations 字段存储）
+            bio: result.smileTest.considerations,
+            considerations: result.smileTest.considerations,
+            // 注释掉其他 longtext 字段以提高性能
+            improvement_points: result.smileTest.improvement_points,
             // 注释掉照片字段以提高性能
             // teeth_image_1: result.smileTest.teeth_image_1,
             // teeth_image_2: result.smileTest.teeth_image_2,
@@ -581,9 +585,11 @@ export class SmileTestController {
             line_id: result.smileTest.line_id,
             city: result.smileTest.city,
             teeth_type: result.smileTest.teeth_type,
-            // 注释掉 longtext 字段以提高性能
-            // considerations: result.smileTest.considerations,
-            // improvement_points: result.smileTest.improvement_points,
+            // 用户备注信息（使用 considerations 字段存储）
+            bio: result.smileTest.considerations,
+            considerations: result.smileTest.considerations,
+            // 注释掉其他 longtext 字段以提高性能
+            improvement_points: result.smileTest.improvement_points,
             // 注释掉照片字段以提高性能
             // teeth_image_1: result.smileTest.teeth_image_1,
             // teeth_image_2: result.smileTest.teeth_image_2,
@@ -832,7 +838,7 @@ export class SmileTestController {
         teeth_type: result.teeth_type,
         // 注释掉 longtext 字段以提高性能
         // considerations: result.considerations,
-        // improvement_points: result.improvement_points,
+        improvement_points: result.improvement_points,
         // 注释掉照片字段以提高性能
         // teeth_image_1: result.teeth_image_1,
         // teeth_image_2: result.teeth_image_2,
@@ -906,7 +912,7 @@ export class SmileTestController {
         teeth_type: result.teeth_type,
         // 注释掉 longtext 字段以提高性能
         // considerations: result.considerations,
-        // improvement_points: result.improvement_points,
+        improvement_points: result.improvement_points,
         // 注释掉照片字段以提高性能
         // teeth_image_1: result.teeth_image_1,
         // teeth_image_2: result.teeth_image_2,
@@ -980,7 +986,7 @@ export class SmileTestController {
         teeth_type: result.teeth_type,
         // 注释掉 longtext 字段以提高性能
         // considerations: result.considerations,
-        // improvement_points: result.improvement_points,
+        improvement_points: result.improvement_points,
         // 注释掉照片字段以提高性能
         // teeth_image_1: result.teeth_image_1,
         // teeth_image_2: result.teeth_image_2,
@@ -1055,7 +1061,7 @@ export class SmileTestController {
         teeth_type: result.teeth_type,
         // 注释掉 longtext 字段以提高性能
         // considerations: result.considerations,
-        // improvement_points: result.improvement_points,
+        improvement_points: result.improvement_points,
         // 注释掉照片字段以提高性能
         // teeth_image_1: result.teeth_image_1,
         // teeth_image_2: result.teeth_image_2,
@@ -1120,7 +1126,7 @@ export class SmileTestController {
         teeth_type: result.teeth_type,
         // 注释掉 longtext 字段以提高性能
         // considerations: result.considerations,
-        // improvement_points: result.improvement_points,
+        improvement_points: result.improvement_points,
         // 注释掉照片字段以提高性能
         // teeth_image_1: result.teeth_image_1,
         // teeth_image_2: result.teeth_image_2,
