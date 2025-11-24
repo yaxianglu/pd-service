@@ -106,11 +106,20 @@ export class AuthService {
     await this.updateUserTokens(user.id, token, refreshToken);
     await this.updateLastLogin(user.id);
 
+    // 重新查询用户信息，确保返回最新的数据（包括更新后的 full_name, username 等）
+    const freshUser = await this.adminUserRepository.findOne({
+      where: { id: user.id, is_deleted: 0 }
+    });
+
+    if (!freshUser) {
+      throw new UnauthorizedException('用戶不存在');
+    }
+
     // 若是医生，尝试返回诊所信息（department 字段存 clinic.uuid）
     let clinic: Clinic | null = null;
     try {
-      if (user.role === 'doctor' && (user as any).department) {
-        clinic = await this.clinicRepository.findOne({ where: { uuid: (user as any).department, is_deleted: 0 } });
+      if (freshUser.role === 'doctor' && (freshUser as any).department) {
+        clinic = await this.clinicRepository.findOne({ where: { uuid: (freshUser as any).department, is_deleted: 0 } });
       }
     } catch (e) {
       clinic = null;
@@ -120,7 +129,7 @@ export class AuthService {
       success: true,
       message: '登入成功',
       data: {
-        user: this.sanitizeUser(user),
+        user: this.sanitizeUser(freshUser),
         token,
         refresh_token: refreshToken,
         expires_in: 24 * 60 * 60,
@@ -152,10 +161,19 @@ export class AuthService {
 
       await this.updateUserTokens(user.id, newToken, newRefreshToken);
 
+      // 重新查询用户信息，确保返回最新的数据（包括更新后的 full_name, username 等）
+      const freshUser = await this.adminUserRepository.findOne({
+        where: { id: user.id, is_deleted: 0 }
+      });
+
+      if (!freshUser) {
+        throw new UnauthorizedException('用戶不存在');
+      }
+
       let clinic: Clinic | null = null;
       try {
-        if (user.role === 'doctor' && (user as any).department) {
-          clinic = await this.clinicRepository.findOne({ where: { uuid: (user as any).department, is_deleted: 0 } });
+        if (freshUser.role === 'doctor' && (freshUser as any).department) {
+          clinic = await this.clinicRepository.findOne({ where: { uuid: (freshUser as any).department, is_deleted: 0 } });
         }
       } catch (e) {
         clinic = null;
@@ -165,7 +183,7 @@ export class AuthService {
         success: true,
         message: '令牌刷新成功',
         data: {
-          user: this.sanitizeUser(user),
+          user: this.sanitizeUser(freshUser),
           token: newToken,
           refresh_token: newRefreshToken,
           expires_in: 24 * 60 * 60,
@@ -347,7 +365,7 @@ export class AuthService {
   }
 
   // 更新用户个人信息
-  async updateProfile(userId: number, updateData: { phone?: string; email?: string }) {
+  async updateProfile(userId: number, updateData: { phone?: string; email?: string; full_name?: string; username?: string }) {
     try {
       // 获取用户信息
       const user = await this.adminUserRepository.findOne({ where: { id: userId, is_deleted: 0 } });
@@ -356,6 +374,19 @@ export class AuthService {
           success: false,
           message: '用戶不存在',
         };
+      }
+
+      // 如果更新 username，检查唯一性
+      if (updateData.username !== undefined && updateData.username !== user.username) {
+        const existingUser = await this.adminUserRepository.findOne({
+          where: { username: updateData.username, is_deleted: 0 }
+        });
+        if (existingUser && existingUser.id !== userId) {
+          return {
+            success: false,
+            message: '帳戶名已存在',
+          };
+        }
       }
 
       // 构建更新数据
@@ -369,6 +400,14 @@ export class AuthService {
 
       if (updateData.email !== undefined) {
         updateFields.email = updateData.email || null;
+      }
+
+      if (updateData.full_name !== undefined) {
+        updateFields.full_name = updateData.full_name || null;
+      }
+
+      if (updateData.username !== undefined) {
+        updateFields.username = updateData.username;
       }
 
       // 更新用户信息

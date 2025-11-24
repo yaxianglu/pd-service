@@ -172,12 +172,12 @@ export class AuthController {
     return this.authService.changePassword(req.user.id, currentPassword, newPassword);
   }
 
-  // 更新用户个人信息（联系方式、邮箱）
+  // 更新用户个人信息（联系方式、邮箱、姓名、帳戶）
   @Put('profile')
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
-  async updateProfile(@Request() req, @Body() body: { phone?: string; email?: string }) {
-    const { phone, email } = body;
+  async updateProfile(@Request() req, @Body() body: { phone?: string; email?: string; full_name?: string; username?: string }) {
+    const { phone, email, full_name, username } = body;
     
     // 验证邮箱格式（如果提供）
     if (email && email !== '') {
@@ -187,7 +187,17 @@ export class AuthController {
       }
     }
 
-    return this.authService.updateProfile(req.user.id, { phone, email });
+    // 验证用户名（如果提供）
+    if (username !== undefined && username !== '') {
+      if (username.length < 3) {
+        throw new BadRequestException('帳戶名至少需要3個字符');
+      }
+      if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+        throw new BadRequestException('帳戶名只能包含字母、數字和下劃線');
+      }
+    }
+
+    return this.authService.updateProfile(req.user.id, { phone, email, full_name, username });
   }
 
   // ========== 账户管理功能 ==========
