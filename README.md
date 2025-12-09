@@ -27,3 +27,11 @@
 3. admin_users(role = 'doctor').department = clinics.uuid
 
 
+
+
+项目重启
+
+```
+pm2 restart pd-service
+```
+
