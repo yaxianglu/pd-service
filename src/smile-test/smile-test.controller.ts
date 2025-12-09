@@ -47,7 +47,7 @@ export class SmileTestController {
         emergency_contact: item.emergency_contact,
         emergency_phone: item.emergency_phone,
         // dental_history: item.dental_history,
-        // current_issues: item.current_issues,
+        current_issues: item.current_issues, // 管理员备注
         // allergies: item.allergies,
         // medications: item.medications,
         test_score: item.test_score,
@@ -1031,11 +1031,11 @@ export class SmileTestController {
     }
   }
 
-  // 更新 smile_test 的備註（覆用 considerations 字段）
+  // 更新 smile_test 的備註（使用 current_issues 字段存储管理员备注，避免覆盖患者填写的 considerations）
   @Put('uuid/:uuid/bio')
   async updateSmileTestBio(@Param('uuid') uuid: string, @Body() body: { bio: string }) {
     try {
-      const result = await this.smileTestService.updateByUuid(uuid, { considerations: body.bio });
+      const result = await this.smileTestService.updateByUuid(uuid, { current_issues: body.bio });
       
       if (!result) {
         throw new HttpException(
