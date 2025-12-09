@@ -36,11 +36,7 @@ export class SmileTest {
   @Index()
   city: string;
 
-  @Column('enum', { 
-    enum: ['normal', 'crowded', 'spaced', 'overbite', 'underbite', 'crossbite', 'other'], 
-    nullable: true 
-  })
-  @Index()
+  @Column('longtext', { nullable: true })
   teeth_type: string;
 
   @Column('longtext', { nullable: true })
