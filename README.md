@@ -32,6 +32,8 @@
 项目重启
 
 ```
+pm2 start src/main.ts --name pd-service --interpreter node --interpreter-args "-r tsconfig-paths/register -r ts-node/register"
+
 pm2 restart pd-service
 ```
 
