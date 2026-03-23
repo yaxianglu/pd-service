@@ -138,7 +138,7 @@ export class SmileTestService {
   async findAll(): Promise<SmileTest[]> {
     return this.smileTestRepository.find({ 
       where: { is_deleted: 0 },
-      order: { created_at: 'DESC' } // 按创建日期降序排序，最新的在最上面
+      order: { updated_at: 'DESC' } // 按最新活动时间降序排序，有新文件上传的会排到最前面
     });
   }
 
@@ -340,10 +340,10 @@ export class SmileTestService {
 
     for (const patient of patients) {
       if (!patient.uuid) continue;
-      // 找该患者最新的一条微笑测试（按创建时间倒序）
+      // 找该患者最新的一条微笑测试（按更新时间倒序，确保有新文件活动时能反映出来）
       const smileTest = await this.smileTestRepository.findOne({
         where: { patient_uuid: patient.uuid as string, is_deleted: 0 },
-        order: { created_at: 'DESC' as any },
+        order: { updated_at: 'DESC' as any },
       });
 
       if (!smileTest || !smileTest.uuid) {
@@ -362,6 +362,13 @@ export class SmileTestService {
         });
       }
     }
+
+    // 按微笑测试的最新更新时间降序排列，确保有新活动（如文件上传）的患者浮到最上方
+    results.sort((a, b) => {
+      const dateA = new Date(a.smileTest.updated_at || a.smileTest.created_at).getTime();
+      const dateB = new Date(b.smileTest.updated_at || b.smileTest.created_at).getTime();
+      return dateB - dateA;
+    });
 
     return results;
   }

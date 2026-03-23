@@ -50,7 +50,13 @@ export class SmileTestFilesService {
       upload_time: new Date()
     });
     
-    return await this.smileTestFilesRepo.save(fileRecord);
+    const saved = await this.smileTestFilesRepo.save(fileRecord);
+
+    // 刷新主表 updated_at，确保后台名单排序能反映最新文件活动
+    smileTest.updated_at = new Date();
+    await this.smileTestRepo.save(smileTest);
+
+    return saved;
   }
 
   /**
