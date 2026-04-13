@@ -138,7 +138,7 @@ export class SmileTestService {
   async findAll(): Promise<SmileTest[]> {
     return this.smileTestRepository.find({ 
       where: { is_deleted: 0 },
-      order: { updated_at: 'DESC' } // 按最新活动时间降序排序，有新文件上传的会排到最前面
+      order: { created_at: 'DESC' } // 按创建时间降序排序，确保列表与“创建时间”列语义一致
     });
   }
 
