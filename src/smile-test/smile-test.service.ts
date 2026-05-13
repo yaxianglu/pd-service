@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { GoneException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, Repository } from 'typeorm';
 import { SmileTest } from '../entities/smile-test.entity';
@@ -75,6 +75,24 @@ export interface SmileTestListResult {
   total: number;
 }
 
+export const SMILE_TEST_UUID_EXPIRATION_DAYS = 7;
+export const SMILE_TEST_UUID_EXPIRATION_MS =
+  SMILE_TEST_UUID_EXPIRATION_DAYS * 24 * 60 * 60 * 1000;
+export const SMILE_TEST_UUID_EXPIRED_ERROR_CODE = 'uuid_expired';
+export const SMILE_TEST_UUID_NOT_FOUND_ERROR_CODE = 'uuid_not_found';
+export const SMILE_TEST_UUID_EXPIRED_MESSAGE = `此微笑测试链接已超过 ${SMILE_TEST_UUID_EXPIRATION_DAYS} 天，请重新开始新的微笑测试`;
+
+export interface SmileTestUuidStatus {
+  uuid: string;
+  exists: boolean;
+  expired: boolean;
+  can_write: boolean;
+  code: typeof SMILE_TEST_UUID_EXPIRED_ERROR_CODE | typeof SMILE_TEST_UUID_NOT_FOUND_ERROR_CODE | 'uuid_valid';
+  created_at: Date | null;
+  expires_at: Date | null;
+  expiration_days: number;
+}
+
 @Injectable()
 export class SmileTestService {
   constructor(
@@ -87,6 +105,80 @@ export class SmileTestService {
     @InjectRepository(Clinic)
     private clinicRepository: Repository<Clinic>,
   ) {}
+
+  private sanitizeSystemManagedFields(data: Partial<SmileTestData> & Record<string, any>): Partial<SmileTestData> {
+    const {
+      created_at,
+      updated_at,
+      id,
+      test_id,
+      created_by,
+      updated_by,
+      is_deleted,
+      deleted_at,
+      ...safeData
+    } = data || {};
+
+    return safeData;
+  }
+
+  private buildUuidStatus(
+    uuid: string,
+    smileTest: Pick<SmileTest, 'created_at'> | null,
+    now: Date = new Date(),
+  ): SmileTestUuidStatus {
+    const createdAt = smileTest?.created_at ? new Date(smileTest.created_at) : null;
+    const hasValidCreatedAt = createdAt && !Number.isNaN(createdAt.getTime());
+    const expiresAt = hasValidCreatedAt
+      ? new Date(createdAt.getTime() + SMILE_TEST_UUID_EXPIRATION_MS)
+      : null;
+    const expired = Boolean(expiresAt && now.getTime() > expiresAt.getTime());
+
+    return {
+      uuid,
+      exists: Boolean(smileTest),
+      expired,
+      can_write: Boolean(smileTest) ? !expired : true,
+      code: !smileTest
+        ? SMILE_TEST_UUID_NOT_FOUND_ERROR_CODE
+        : expired
+          ? SMILE_TEST_UUID_EXPIRED_ERROR_CODE
+          : 'uuid_valid',
+      created_at: hasValidCreatedAt ? createdAt : null,
+      expires_at: expiresAt,
+      expiration_days: SMILE_TEST_UUID_EXPIRATION_DAYS,
+    };
+  }
+
+  private assertSmileTestWritable(
+    smileTest: Pick<SmileTest, 'uuid' | 'created_at'>,
+    now: Date = new Date(),
+  ): SmileTestUuidStatus {
+    const status = this.buildUuidStatus(smileTest.uuid, smileTest, now);
+    if (status.expired) {
+      throw new GoneException({
+        success: false,
+        message: SMILE_TEST_UUID_EXPIRED_MESSAGE,
+        error_code: SMILE_TEST_UUID_EXPIRED_ERROR_CODE,
+        data: status,
+      });
+    }
+    return status;
+  }
+
+  async getUuidStatus(uuid: string, now: Date = new Date()): Promise<SmileTestUuidStatus> {
+    const smileTest = await this.findByUuid(uuid);
+    return this.buildUuidStatus(uuid, smileTest, now);
+  }
+
+  async ensureUuidWritable(uuid: string, now: Date = new Date()): Promise<SmileTestUuidStatus> {
+    const smileTest = await this.findByUuid(uuid);
+    if (!smileTest) {
+      return this.buildUuidStatus(uuid, null, now);
+    }
+
+    return this.assertSmileTestWritable(smileTest, now);
+  }
 
   async findByUuid(uuid: string): Promise<SmileTest | null> {
     return this.smileTestRepository.findOne({ 
@@ -283,9 +375,10 @@ export class SmileTestService {
   }
 
   async create(data: SmileTestData): Promise<SmileTest> {
+    const safeData = this.sanitizeSystemManagedFields(data as any);
     const smileTest = this.smileTestRepository.create({
-      ...data,
-      test_status: data.test_status || 'pending',
+      ...safeData,
+      test_status: safeData.test_status || 'pending',
       is_deleted: 0
     });
     return await this.smileTestRepository.save(smileTest);
@@ -323,7 +416,8 @@ export class SmileTestService {
       return null;
     }
 
-    Object.assign(existing, data);
+    this.assertSmileTestWritable(existing);
+    Object.assign(existing, this.sanitizeSystemManagedFields(data as any));
     return await this.smileTestRepository.save(existing);
   }
 
@@ -333,18 +427,21 @@ export class SmileTestService {
       return null;
     }
 
-    Object.assign(existing, data);
+    this.assertSmileTestWritable(existing);
+    Object.assign(existing, this.sanitizeSystemManagedFields(data as any));
     return await this.smileTestRepository.save(existing);
   }
 
   async saveOrUpdateByUuid(uuid: string, data: SmileTestData): Promise<SmileTest> {
+    const safeData = this.sanitizeSystemManagedFields(data as any);
     const existing = await this.findByUuid(uuid);
     if (existing) {
-      Object.assign(existing, data);
+      this.assertSmileTestWritable(existing);
+      Object.assign(existing, safeData);
       return await this.smileTestRepository.save(existing);
     } else {
       return await this.create({
-        ...data,
+        ...safeData,
         uuid: uuid
       });
     }

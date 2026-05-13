@@ -6,10 +6,12 @@ import { UploadService } from './upload.service';
 import { UploadConfigService } from './upload-config.service';
 import { FileUpload, UploadSession } from '../entities/file-upload.entity';
 import * as multer from 'multer';
+import { SmileTestModule } from '../smile-test/smile-test.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([FileUpload, UploadSession]),
+    SmileTestModule,
     MulterModule.register({
       storage: multer.memoryStorage(), // 使用内存存储，由我们自己处理文件保存
       limits: {

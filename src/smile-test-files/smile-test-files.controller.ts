@@ -12,10 +12,14 @@ import {
 } from '@nestjs/common';
 import { Response } from 'express';
 import { SmileTestFilesService } from './smile-test-files.service';
+import { SmileTestService } from '../smile-test/smile-test.service';
 
 @Controller('api/smile-test-files')
 export class SmileTestFilesController {
-  constructor(private readonly smileTestFilesService: SmileTestFilesService) {}
+  constructor(
+    private readonly smileTestFilesService: SmileTestFilesService,
+    private readonly smileTestService: SmileTestService,
+  ) {}
 
   /**
    * 测试端点
@@ -243,6 +247,8 @@ export class SmileTestFilesController {
     @Body() data: { image_data: string; file_name?: string }
   ) {
     try {
+      await this.smileTestService.ensureUuidWritable(uuid);
+
       const imageIndex = parseInt(index);
       if (isNaN(imageIndex) || imageIndex < 1 || imageIndex > 4) {
         throw new Error('图片索引必须在1-4之间');
@@ -270,6 +276,9 @@ export class SmileTestFilesController {
         message: '图片上传成功'
       };
     } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
       throw new HttpException(
         {
           success: false,
@@ -290,6 +299,8 @@ export class SmileTestFilesController {
     @Body() data: { image_group: any }
   ) {
     try {
+      await this.smileTestService.ensureUuidWritable(uuid);
+
       if (!data.image_group || !data.image_group.images) {
         throw new Error('图片组数据不能为空');
       }
@@ -311,6 +322,9 @@ export class SmileTestFilesController {
         message: '图片组上传成功'
       };
     } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
       throw new HttpException(
         {
           success: false,
@@ -335,6 +349,8 @@ export class SmileTestFilesController {
     }
   ) {
     try {
+      await this.smileTestService.ensureUuidWritable(uuid);
+
       if (!data.file_data) {
         throw new Error('文件数据不能为空');
       }
@@ -371,6 +387,9 @@ export class SmileTestFilesController {
         message: '口扫文件上传成功'
       };
     } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
       throw new HttpException(
         {
           success: false,

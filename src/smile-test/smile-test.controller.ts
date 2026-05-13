@@ -1,5 +1,12 @@
 import { Controller, Get, Post, Put, Delete, Param, Body, HttpException, HttpStatus, Query, Res } from '@nestjs/common';
-import { SmileTestService, SmileTestData, SmileTestListFilters } from './smile-test.service';
+import {
+  SMILE_TEST_UUID_EXPIRED_ERROR_CODE,
+  SMILE_TEST_UUID_EXPIRED_MESSAGE,
+  SMILE_TEST_UUID_NOT_FOUND_ERROR_CODE,
+  SmileTestService,
+  SmileTestData,
+  SmileTestListFilters,
+} from './smile-test.service';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Patient } from '../entities/patient.entity';
@@ -803,11 +810,28 @@ export class SmileTestController {
   async validateUuid(@Param('uuid') uuid: string) {
     try {
       const smileTest = await this.smileTestService.findByUuid(uuid);
+      const status = await this.smileTestService.getUuidStatus(uuid);
       
       if (!smileTest) {
         return {
           success: false,
+          error_code: SMILE_TEST_UUID_NOT_FOUND_ERROR_CODE,
+          data: status,
           message: 'UUID不存在或已失效'
+        };
+      }
+
+      if (status.expired) {
+        return {
+          success: false,
+          error_code: SMILE_TEST_UUID_EXPIRED_ERROR_CODE,
+          data: {
+            ...status,
+            test_id: smileTest.test_id,
+            full_name: smileTest.full_name,
+            test_status: smileTest.test_status,
+          },
+          message: SMILE_TEST_UUID_EXPIRED_MESSAGE,
         };
       }
 
@@ -815,6 +839,7 @@ export class SmileTestController {
       return {
         success: true,
         data: {
+          ...status,
           uuid: smileTest.uuid,
           test_id: smileTest.test_id,
           full_name: smileTest.full_name,
@@ -1043,6 +1068,9 @@ export class SmileTestController {
         message: 'Data updated successfully'
       };
     } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
       throw new HttpException(
         {
           success: false,

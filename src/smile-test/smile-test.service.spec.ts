@@ -1,5 +1,8 @@
 import { Brackets } from 'typeorm';
-import { SmileTestService } from './smile-test.service';
+import {
+  SMILE_TEST_UUID_EXPIRATION_DAYS,
+  SmileTestService,
+} from './smile-test.service';
 
 const createRepo = () => ({
   findOne: jest.fn(),
@@ -170,5 +173,110 @@ describe('SmileTestService', () => {
       order: { created_at: 'DESC' },
     }));
     expect(result.map((item) => item.smileTest.uuid)).toEqual(['smile-b', 'smile-a']);
+  });
+
+  it('does not allow clients to overwrite smile test created_at when updating by uuid', async () => {
+    const originalCreatedAt = new Date('2026-05-07T17:16:00Z');
+    const forgedCreatedAt = new Date('2025-12-15T22:54:01Z');
+    const existing = {
+      uuid: 'smile-immutable-created-at',
+      created_at: originalCreatedAt,
+      updated_at: new Date('2026-05-07T17:16:00Z'),
+      full_name: '龔達鈞',
+    };
+
+    jest.spyOn(service, 'findByUuid').mockResolvedValue(existing as any);
+    smileTestRepo.save.mockImplementation(async (entity) => entity);
+
+    const result = await service.saveOrUpdateByUuid('smile-immutable-created-at', {
+      full_name: '龔達鈞-更新後',
+      created_at: forgedCreatedAt as any,
+    } as any);
+
+    expect(smileTestRepo.save).toHaveBeenCalledWith(expect.objectContaining({
+      uuid: 'smile-immutable-created-at',
+      full_name: '龔達鈞-更新後',
+      created_at: originalCreatedAt,
+    }));
+    expect(result).toEqual(expect.objectContaining({
+      created_at: originalCreatedAt,
+    }));
+  });
+
+  it('does not allow clients to preset smile test created_at when creating records', async () => {
+    const forgedCreatedAt = new Date('2025-12-15T22:54:01Z');
+
+    smileTestRepo.create.mockImplementation((payload) => payload);
+    smileTestRepo.save.mockImplementation(async (entity) => entity);
+
+    await service.create({
+      uuid: 'new-smile-test',
+      full_name: '新用戶',
+      created_at: forgedCreatedAt as any,
+    } as any);
+
+    expect(smileTestRepo.create).toHaveBeenCalledWith(expect.not.objectContaining({
+      created_at: forgedCreatedAt,
+    }));
+  });
+
+  it('marks uuid as expired when the smile test was created more than 7 days ago', async () => {
+    const createdAt = new Date('2026-05-01T09:00:00Z');
+    jest.spyOn(service, 'findByUuid').mockResolvedValue({
+      uuid: 'expired-smile',
+      created_at: createdAt,
+    } as any);
+
+    const result = await service.getUuidStatus(
+      'expired-smile',
+      new Date(createdAt.getTime() + ((SMILE_TEST_UUID_EXPIRATION_DAYS + 1) * 24 * 60 * 60 * 1000)),
+    );
+
+    expect(result).toEqual(expect.objectContaining({
+      uuid: 'expired-smile',
+      exists: true,
+      expired: true,
+      can_write: false,
+      code: 'uuid_expired',
+      expiration_days: SMILE_TEST_UUID_EXPIRATION_DAYS,
+    }));
+  });
+
+  it('rejects updating an existing smile test when the uuid has expired', async () => {
+    const createdAt = new Date('2026-05-01T09:00:00Z');
+    jest.spyOn(service, 'findByUuid').mockResolvedValue({
+      uuid: 'expired-smile',
+      created_at: createdAt,
+      full_name: '旧链接用户',
+    } as any);
+
+    await expect(service.saveOrUpdateByUuid('expired-smile', {
+      full_name: '新名字',
+    } as any)).rejects.toMatchObject({
+      response: expect.objectContaining({
+        error_code: 'uuid_expired',
+      }),
+    });
+  });
+
+  it('still creates a new smile test when uuid does not exist yet', async () => {
+    jest.spyOn(service, 'findByUuid').mockResolvedValue(null);
+    smileTestRepo.create.mockImplementation((payload) => payload);
+    smileTestRepo.save.mockImplementation(async (entity) => entity);
+
+    const result = await service.saveOrUpdateByUuid('brand-new-smile', {
+      full_name: '新用户',
+      test_status: 'in_progress',
+    } as any);
+
+    expect(smileTestRepo.create).toHaveBeenCalledWith(expect.objectContaining({
+      uuid: 'brand-new-smile',
+      full_name: '新用户',
+      test_status: 'in_progress',
+    }));
+    expect(result).toEqual(expect.objectContaining({
+      uuid: 'brand-new-smile',
+      full_name: '新用户',
+    }));
   });
 });

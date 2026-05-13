@@ -17,6 +17,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { Request, Response } from 'express';
 import { UploadService, InitializeUploadDto } from './upload.service';
 import { UploadConfigService } from './upload-config.service';
+import { SmileTestService } from '../smile-test/smile-test.service';
 
 // 定义文件类型
 interface MulterFile {
@@ -38,6 +39,7 @@ export class UploadController {
   constructor(
     private readonly uploadService: UploadService,
     private readonly configService: UploadConfigService,
+    private readonly smileTestService: SmileTestService,
   ) {}
 
   /**
@@ -49,6 +51,8 @@ export class UploadController {
     @Body() body: InitializeUploadDto,
   ) {
     try {
+      await this.smileTestService.ensureUuidWritable(smileTestUuid);
+
       // 添加 smileTestUuid 到请求体
       const dto: InitializeUploadDto = {
         ...body,
@@ -67,6 +71,9 @@ export class UploadController {
         },
       };
     } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
       this.logger.error(`Initialize upload failed for ${smileTestUuid}:`, error);
       throw new HttpException(
         {
@@ -90,6 +97,8 @@ export class UploadController {
     @UploadedFile() file: MulterFile,
   ) {
     try {
+      await this.smileTestService.ensureUuidWritable(smileTestUuid);
+
       if (!file || !body.uploadId || body.chunkIndex === undefined) {
         throw new Error('缺少必要参数');
       }
@@ -109,6 +118,9 @@ export class UploadController {
         data: result,
       };
     } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
       this.logger.error(`Chunk upload failed for ${smileTestUuid}:`, error);
       throw new HttpException(
         {
@@ -130,6 +142,8 @@ export class UploadController {
     @Body() body: { uploadId: string },
   ) {
     try {
+      await this.smileTestService.ensureUuidWritable(smileTestUuid);
+
       if (!body.uploadId) {
         throw new Error('缺少 uploadId');
       }
@@ -148,6 +162,9 @@ export class UploadController {
         },
       };
     } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
       this.logger.error(`Finalize upload failed for ${smileTestUuid}:`, error);
       throw new HttpException(
         {
@@ -170,6 +187,8 @@ export class UploadController {
     @Res() res: Response,
   ) {
     try {
+      await this.smileTestService.ensureUuidWritable(smileTestUuid);
+
       // 从请求头获取文件信息
       const fileName = req.headers['x-file-name'] as string;
       const fileSize = parseInt(req.headers['x-file-size'] as string);
@@ -265,6 +284,9 @@ export class UploadController {
         });
       });
     } catch (error) {
+      if (error instanceof HttpException) {
+        return res.status(error.getStatus()).json(error.getResponse());
+      }
       this.logger.error(`Binary upload setup failed for ${smileTestUuid}:`, error);
       return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
         success: false,

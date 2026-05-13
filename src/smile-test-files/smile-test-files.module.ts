@@ -4,9 +4,10 @@ import { SmileTestFilesController } from './smile-test-files.controller';
 import { SmileTestFilesService } from './smile-test-files.service';
 import { SmileTestFiles } from '../entities/smile-test-files.entity';
 import { SmileTest } from '../entities/smile-test.entity';
+import { SmileTestModule } from '../smile-test/smile-test.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([SmileTestFiles, SmileTest])],
+  imports: [TypeOrmModule.forFeature([SmileTestFiles, SmileTest]), SmileTestModule],
   controllers: [SmileTestFilesController],
   providers: [SmileTestFilesService],
   exports: [SmileTestFilesService],
