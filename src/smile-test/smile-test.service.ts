@@ -59,6 +59,7 @@ export interface SmileTestListFilters {
   date_from?: string;
   date_to?: string;
   account_keyword?: string;
+  patient_name?: string;
   bound_state?: 'bound' | 'unbound';
   sort_by?: 'created_at' | 'updated_at' | 'image_upload_time';
   page?: number;
@@ -231,13 +232,16 @@ export class SmileTestService {
     if (filters.account_keyword) {
       const keyword = `%${filters.account_keyword.trim()}%`;
       query.andWhere(new Brackets((qb) => {
-        qb.where('st.full_name LIKE :keyword', { keyword })
-          .orWhere('st.phone LIKE :keyword', { keyword })
+        qb.where('st.phone LIKE :keyword', { keyword })
           .orWhere('st.email LIKE :keyword', { keyword })
-          .orWhere('st.line_id LIKE :keyword', { keyword })
-          .orWhere('st.test_id LIKE :keyword', { keyword })
-          .orWhere('st.uuid LIKE :keyword', { keyword });
+          .orWhere('st.line_id LIKE :keyword', { keyword });
       }));
+    }
+
+    if (filters.patient_name) {
+      query.andWhere('st.full_name LIKE :patientNameKeyword', {
+        patientNameKeyword: `%${filters.patient_name.trim()}%`,
+      });
     }
 
     if (filters.bound_state === 'bound') {

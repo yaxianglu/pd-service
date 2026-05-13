@@ -60,6 +60,7 @@ describe('SmileTestService', () => {
     const result = await (service as any).findAll({
       status: 'completed',
       account_keyword: 'line-user',
+      patient_name: '劉子渝',
       bound_state: 'unbound',
       date_from: '2026-05-01',
       date_to: '2026-05-31',
@@ -70,6 +71,7 @@ describe('SmileTestService', () => {
     expect(smileTestRepo.createQueryBuilder).toHaveBeenCalledWith('st');
     expect(qb.orderBy).toHaveBeenCalledWith('st.created_at', 'DESC');
     expect(qb.andWhere).toHaveBeenCalledWith(expect.any(Brackets));
+    expect(qb.andWhere).toHaveBeenCalledTimes(7);
     expect(qb.andWhere).toHaveBeenCalledWith('st.test_status = :status', { status: 'completed' });
     expect(qb.skip).toHaveBeenCalledWith(0);
     expect(qb.take).toHaveBeenCalledWith(20);
