@@ -31,7 +31,7 @@ describe('SmileTestService', () => {
   });
 
   it('uses query builder filters and only returns valid smile test list records', async () => {
-    const getMany = jest.fn().mockResolvedValue([]);
+    const getManyAndCount = jest.fn().mockResolvedValue([[], 107]);
     const qb = {
       select: jest.fn().mockReturnThis(),
       where: jest.fn().mockReturnThis(),
@@ -39,11 +39,11 @@ describe('SmileTestService', () => {
       orderBy: jest.fn().mockReturnThis(),
       skip: jest.fn().mockReturnThis(),
       take: jest.fn().mockReturnThis(),
-      getMany,
+      getManyAndCount,
     };
     smileTestRepo.createQueryBuilder.mockReturnValue(qb);
 
-    await (service as any).findAll({
+    const result = await (service as any).findAll({
       status: 'completed',
       account_keyword: 'line-user',
       bound_state: 'unbound',
@@ -57,7 +57,13 @@ describe('SmileTestService', () => {
     expect(qb.orderBy).toHaveBeenCalledWith('st.created_at', 'DESC');
     expect(qb.andWhere).toHaveBeenCalledWith(expect.any(Brackets));
     expect(qb.andWhere).toHaveBeenCalledWith('st.test_status = :status', { status: 'completed' });
-    expect(getMany).toHaveBeenCalled();
+    expect(qb.skip).toHaveBeenCalledWith(0);
+    expect(qb.take).toHaveBeenCalledWith(20);
+    expect(getManyAndCount).toHaveBeenCalled();
+    expect(result).toEqual({
+      data: [],
+      total: 107,
+    });
   });
 
   it('sorts doctor patient results by smile test created_at instead of updated_at', async () => {

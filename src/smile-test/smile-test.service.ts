@@ -64,6 +64,11 @@ export interface SmileTestListFilters {
   page_size?: number;
 }
 
+export interface SmileTestListResult {
+  data: SmileTest[];
+  total: number;
+}
+
 @Injectable()
 export class SmileTestService {
   constructor(
@@ -145,7 +150,7 @@ export class SmileTestService {
     });
   }
 
-  async findAll(filters: SmileTestListFilters = {}): Promise<SmileTest[]> {
+  async findAll(filters: SmileTestListFilters = {}): Promise<SmileTestListResult> {
     const query = this.smileTestRepository
       .createQueryBuilder('st')
       .select([
@@ -240,7 +245,12 @@ export class SmileTestService {
       query.skip((page - 1) * pageSize).take(pageSize);
     }
 
-    return await query.getMany();
+    const [data, total] = await query.getManyAndCount();
+
+    return {
+      data,
+      total,
+    };
   }
 
   async create(data: SmileTestData): Promise<SmileTest> {

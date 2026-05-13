@@ -34,7 +34,10 @@ export class SmileTestController {
         page: page ? Number(page) : undefined,
         page_size: pageSize ? Number(pageSize) : undefined,
       };
-      const data = await this.smileTestService.findAll(filters);
+      const { data, total } = await this.smileTestService.findAll(filters);
+      const currentPage = filters.page || 1;
+      const currentPageSize = filters.page_size || data.length || 1;
+      const totalPages = Math.ceil(total / currentPageSize) || 1;
       
       const filteredData = data.map(item => ({
         id: item.id,
@@ -68,7 +71,16 @@ export class SmileTestController {
         updated_at: item.updated_at
       }));
       
-      return { success: true, data: filteredData };
+      return {
+        success: true,
+        data: filteredData,
+        pagination: {
+          page: currentPage,
+          page_size: currentPageSize,
+          total,
+          total_pages: totalPages,
+        }
+      };
     } catch (error) {
       throw new HttpException(
         {
