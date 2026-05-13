@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Put, Delete, Param, Body, HttpException, HttpStatus, Query, Res } from '@nestjs/common';
-import { SmileTestService, SmileTestData } from './smile-test.service';
+import { SmileTestService, SmileTestData, SmileTestListFilters } from './smile-test.service';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Patient } from '../entities/patient.entity';
@@ -15,11 +15,27 @@ export class SmileTestController {
   ) {}
 
   @Get()
-  async listAll() {
+  async listAll(
+    @Query('status') status?: string,
+    @Query('date_from') dateFrom?: string,
+    @Query('date_to') dateTo?: string,
+    @Query('account_keyword') accountKeyword?: string,
+    @Query('bound_state') boundState?: 'bound' | 'unbound',
+    @Query('page') page?: string,
+    @Query('page_size') pageSize?: string,
+  ) {
     try {
-      const data = await this.smileTestService.findAll();
+      const filters: SmileTestListFilters = {
+        status,
+        date_from: dateFrom,
+        date_to: dateTo,
+        account_keyword: accountKeyword,
+        bound_state: boundState,
+        page: page ? Number(page) : undefined,
+        page_size: pageSize ? Number(pageSize) : undefined,
+      };
+      const data = await this.smileTestService.findAll(filters);
       
-      // 过滤掉大字段以提高性能
       const filteredData = data.map(item => ({
         id: item.id,
         test_id: item.test_id,
@@ -31,25 +47,15 @@ export class SmileTestController {
         line_id: item.line_id,
         city: item.city,
         teeth_type: item.teeth_type,
-        // 用户备注信息（使用 considerations 字段存储）
         bio: item.considerations,
         considerations: item.considerations,
-        // 注释掉其他字段以提高性能
         improvement_points: item.improvement_points,
-        // teeth_image_1: item.teeth_image_1,
-        // teeth_image_2: item.teeth_image_2,
-        // teeth_image_3: item.teeth_image_3,
-        // teeth_image_4: item.teeth_image_4,
         age: item.age,
         gender: item.gender,
         occupation: item.occupation,
-        // address: item.address,
         emergency_contact: item.emergency_contact,
         emergency_phone: item.emergency_phone,
-        // dental_history: item.dental_history,
-        current_issues: item.current_issues, // 管理员备注
-        // allergies: item.allergies,
-        // medications: item.medications,
+        current_issues: item.current_issues,
         test_score: item.test_score,
         confidence_level: item.confidence_level,
         recommended_treatment: item.recommended_treatment,

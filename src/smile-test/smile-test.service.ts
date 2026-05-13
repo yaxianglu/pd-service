@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Brackets, Repository } from 'typeorm';
 import { SmileTest } from '../entities/smile-test.entity';
 import { Patient } from '../entities/patient.entity';
 import { AdminUser } from '../entities/admin-user.entity';
@@ -52,6 +52,16 @@ interface DoctorIdentifier {
   uuid?: string;
   email?: string;
   username?: string;
+}
+
+export interface SmileTestListFilters {
+  status?: string;
+  date_from?: string;
+  date_to?: string;
+  account_keyword?: string;
+  bound_state?: 'bound' | 'unbound';
+  page?: number;
+  page_size?: number;
 }
 
 @Injectable()
@@ -135,11 +145,102 @@ export class SmileTestService {
     });
   }
 
-  async findAll(): Promise<SmileTest[]> {
-    return this.smileTestRepository.find({ 
-      where: { is_deleted: 0 },
-      order: { created_at: 'DESC' } // 按创建时间降序排序，确保列表与“创建时间”列语义一致
-    });
+  async findAll(filters: SmileTestListFilters = {}): Promise<SmileTest[]> {
+    const query = this.smileTestRepository
+      .createQueryBuilder('st')
+      .select([
+        'st.id',
+        'st.test_id',
+        'st.uuid',
+        'st.full_name',
+        'st.birth_date',
+        'st.phone',
+        'st.email',
+        'st.line_id',
+        'st.city',
+        'st.teeth_type',
+        'st.considerations',
+        'st.improvement_points',
+        'st.age',
+        'st.gender',
+        'st.occupation',
+        'st.emergency_contact',
+        'st.emergency_phone',
+        'st.current_issues',
+        'st.test_score',
+        'st.confidence_level',
+        'st.recommended_treatment',
+        'st.estimated_cost',
+        'st.test_status',
+        'st.appointment_date',
+        'st.follow_up_date',
+        'st.patient_uuid',
+        'st.created_at',
+        'st.updated_at',
+      ])
+      .where('st.is_deleted = :isDeleted', { isDeleted: 0 })
+      .andWhere(new Brackets((qb) => {
+        qb.where(`
+          EXISTS (
+            SELECT 1
+            FROM smile_test_files sf
+            WHERE sf.smile_test_uuid = st.uuid
+              AND sf.status = :fileStatus
+              AND sf.upload_type = :uploadType
+          )
+        `, {
+          fileStatus: 'normal',
+          uploadType: 'smile_test',
+        })
+          .orWhere(`NULLIF(st.teeth_image_1, '') IS NOT NULL`)
+          .orWhere(`NULLIF(st.teeth_image_2, '') IS NOT NULL`)
+          .orWhere(`NULLIF(st.teeth_image_3, '') IS NOT NULL`)
+          .orWhere(`NULLIF(st.teeth_image_4, '') IS NOT NULL`);
+      }));
+
+    if (filters.status) {
+      query.andWhere('st.test_status = :status', { status: filters.status });
+    }
+
+    if (filters.date_from) {
+      query.andWhere('st.created_at >= :dateFrom', { dateFrom: `${filters.date_from} 00:00:00` });
+    }
+
+    if (filters.date_to) {
+      query.andWhere('st.created_at <= :dateTo', { dateTo: `${filters.date_to} 23:59:59` });
+    }
+
+    if (filters.account_keyword) {
+      const keyword = `%${filters.account_keyword.trim()}%`;
+      query.andWhere(new Brackets((qb) => {
+        qb.where('st.full_name LIKE :keyword', { keyword })
+          .orWhere('st.phone LIKE :keyword', { keyword })
+          .orWhere('st.email LIKE :keyword', { keyword })
+          .orWhere('st.line_id LIKE :keyword', { keyword })
+          .orWhere('st.test_id LIKE :keyword', { keyword })
+          .orWhere('st.uuid LIKE :keyword', { keyword });
+      }));
+    }
+
+    if (filters.bound_state === 'bound') {
+      query.andWhere(`NULLIF(st.patient_uuid, '') IS NOT NULL`);
+    }
+
+    if (filters.bound_state === 'unbound') {
+      query.andWhere(new Brackets((qb) => {
+        qb.where('st.patient_uuid IS NULL').orWhere(`NULLIF(st.patient_uuid, '') IS NULL`);
+      }));
+    }
+
+    query.orderBy('st.created_at', 'DESC');
+
+    if (filters.page && filters.page_size) {
+      const page = Math.max(1, Number(filters.page));
+      const pageSize = Math.max(1, Number(filters.page_size));
+      query.skip((page - 1) * pageSize).take(pageSize);
+    }
+
+    return await query.getMany();
   }
 
   async create(data: SmileTestData): Promise<SmileTest> {
@@ -340,10 +441,10 @@ export class SmileTestService {
 
     for (const patient of patients) {
       if (!patient.uuid) continue;
-      // 找该患者最新的一条微笑测试（按更新时间倒序，确保有新文件活动时能反映出来）
+      // 找该患者最新的一条微笑测试，以创建时间定义“最新资料”
       const smileTest = await this.smileTestRepository.findOne({
         where: { patient_uuid: patient.uuid as string, is_deleted: 0 },
-        order: { updated_at: 'DESC' as any },
+        order: { created_at: 'DESC' as any },
       });
 
       if (!smileTest || !smileTest.uuid) {
@@ -363,10 +464,10 @@ export class SmileTestService {
       }
     }
 
-    // 按微笑测试的最新更新时间降序排列，确保有新活动（如文件上传）的患者浮到最上方
+    // 后台主列表统一按微笑测试创建时间排序，避免旧资料因补件上浮
     results.sort((a, b) => {
-      const dateA = new Date(a.smileTest.updated_at || a.smileTest.created_at).getTime();
-      const dateB = new Date(b.smileTest.updated_at || b.smileTest.created_at).getTime();
+      const dateA = new Date(a.smileTest.created_at).getTime();
+      const dateB = new Date(b.smileTest.created_at).getTime();
       return dateB - dateA;
     });
 
