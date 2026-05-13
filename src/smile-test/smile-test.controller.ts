@@ -21,6 +21,7 @@ export class SmileTestController {
     @Query('date_to') dateTo?: string,
     @Query('account_keyword') accountKeyword?: string,
     @Query('bound_state') boundState?: 'bound' | 'unbound',
+    @Query('sort_by') sortBy?: 'created_at' | 'updated_at' | 'image_upload_time',
     @Query('page') page?: string,
     @Query('page_size') pageSize?: string,
   ) {
@@ -31,6 +32,7 @@ export class SmileTestController {
         date_to: dateTo,
         account_keyword: accountKeyword,
         bound_state: boundState,
+        sort_by: sortBy,
         page: page ? Number(page) : undefined,
         page_size: pageSize ? Number(pageSize) : undefined,
       };
@@ -68,7 +70,8 @@ export class SmileTestController {
         follow_up_date: item.follow_up_date,
         patient_uuid: item.patient_uuid,
         created_at: item.created_at,
-        updated_at: item.updated_at
+        updated_at: item.updated_at,
+        latest_image_upload_time: item.latest_image_upload_time || null,
       }));
       
       return {

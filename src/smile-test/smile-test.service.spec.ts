@@ -31,15 +31,29 @@ describe('SmileTestService', () => {
   });
 
   it('uses query builder filters and only returns valid smile test list records', async () => {
-    const getManyAndCount = jest.fn().mockResolvedValue([[], 107]);
+    const getCount = jest.fn().mockResolvedValue(107);
+    const getRawAndEntities = jest.fn().mockResolvedValue({
+      entities: [{
+        uuid: 'smile-1',
+        created_at: new Date('2026-05-10T09:00:00Z'),
+      }],
+      raw: [{
+        latest_image_upload_time: '2026-05-11T10:00:00.000Z',
+      }],
+    });
     const qb = {
       select: jest.fn().mockReturnThis(),
+      addSelect: jest.fn().mockReturnThis(),
       where: jest.fn().mockReturnThis(),
       andWhere: jest.fn().mockReturnThis(),
       orderBy: jest.fn().mockReturnThis(),
+      addOrderBy: jest.fn().mockReturnThis(),
       skip: jest.fn().mockReturnThis(),
       take: jest.fn().mockReturnThis(),
-      getManyAndCount,
+      clone: jest.fn().mockReturnValue({
+        getCount,
+      }),
+      getRawAndEntities,
     };
     smileTestRepo.createQueryBuilder.mockReturnValue(qb);
 
@@ -59,11 +73,50 @@ describe('SmileTestService', () => {
     expect(qb.andWhere).toHaveBeenCalledWith('st.test_status = :status', { status: 'completed' });
     expect(qb.skip).toHaveBeenCalledWith(0);
     expect(qb.take).toHaveBeenCalledWith(20);
-    expect(getManyAndCount).toHaveBeenCalled();
+    expect(qb.clone).toHaveBeenCalled();
+    expect(getCount).toHaveBeenCalled();
+    expect(getRawAndEntities).toHaveBeenCalled();
     expect(result).toEqual({
-      data: [],
+      data: [{
+        uuid: 'smile-1',
+        created_at: new Date('2026-05-10T09:00:00Z'),
+        latest_image_upload_time: '2026-05-11T10:00:00.000Z',
+      }],
       total: 107,
     });
+  });
+
+  it('sorts smile test list by latest image upload time when requested', async () => {
+    const getCount = jest.fn().mockResolvedValue(12);
+    const getRawAndEntities = jest.fn().mockResolvedValue({
+      entities: [],
+      raw: [],
+    });
+    const qb = {
+      select: jest.fn().mockReturnThis(),
+      addSelect: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      orderBy: jest.fn().mockReturnThis(),
+      addOrderBy: jest.fn().mockReturnThis(),
+      skip: jest.fn().mockReturnThis(),
+      take: jest.fn().mockReturnThis(),
+      clone: jest.fn().mockReturnValue({
+        getCount,
+      }),
+      getRawAndEntities,
+    };
+    smileTestRepo.createQueryBuilder.mockReturnValue(qb);
+
+    await (service as any).findAll({
+      sort_by: 'image_upload_time',
+      page: 1,
+      page_size: 50,
+    });
+
+    expect(qb.addSelect).toHaveBeenCalled();
+    expect(qb.orderBy).toHaveBeenCalledWith('latest_image_upload_time', 'DESC');
+    expect(qb.addOrderBy).toHaveBeenCalledWith('st.created_at', 'DESC');
   });
 
   it('sorts doctor patient results by smile test created_at instead of updated_at', async () => {

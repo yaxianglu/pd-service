@@ -60,12 +60,17 @@ export interface SmileTestListFilters {
   date_to?: string;
   account_keyword?: string;
   bound_state?: 'bound' | 'unbound';
+  sort_by?: 'created_at' | 'updated_at' | 'image_upload_time';
   page?: number;
   page_size?: number;
 }
 
+export type SmileTestListItem = SmileTest & {
+  latest_image_upload_time?: string | null;
+};
+
 export interface SmileTestListResult {
-  data: SmileTest[];
+  data: SmileTestListItem[];
   total: number;
 }
 
@@ -183,6 +188,14 @@ export class SmileTestService {
         'st.created_at',
         'st.updated_at',
       ])
+      .addSelect((subQuery) => {
+        return subQuery
+          .select('MAX(COALESCE(sf.upload_time, sf.created_at))')
+          .from('smile_test_files', 'sf')
+          .where('sf.smile_test_uuid = st.uuid')
+          .andWhere('sf.status = :fileStatus')
+          .andWhere('sf.upload_type = :uploadType');
+      }, 'latest_image_upload_time')
       .where('st.is_deleted = :isDeleted', { isDeleted: 0 })
       .andWhere(new Brackets((qb) => {
         qb.where(`
@@ -237,7 +250,15 @@ export class SmileTestService {
       }));
     }
 
-    query.orderBy('st.created_at', 'DESC');
+    if (filters.sort_by === 'image_upload_time') {
+      query.orderBy('latest_image_upload_time', 'DESC').addOrderBy('st.created_at', 'DESC');
+    } else if (filters.sort_by === 'updated_at') {
+      query.orderBy('st.updated_at', 'DESC').addOrderBy('st.created_at', 'DESC');
+    } else {
+      query.orderBy('st.created_at', 'DESC');
+    }
+
+    const total = await query.clone().getCount();
 
     if (filters.page && filters.page_size) {
       const page = Math.max(1, Number(filters.page));
@@ -245,7 +266,11 @@ export class SmileTestService {
       query.skip((page - 1) * pageSize).take(pageSize);
     }
 
-    const [data, total] = await query.getManyAndCount();
+    const { entities, raw } = await query.getRawAndEntities();
+    const data = entities.map((item, index) => ({
+      ...item,
+      latest_image_upload_time: raw[index]?.latest_image_upload_time ?? null,
+    }));
 
     return {
       data,
