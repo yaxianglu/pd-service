@@ -1414,7 +1414,9 @@ export class SmileTestController {
         throw new HttpException({ success: false, message: '新建患者缺少UUID' }, HttpStatus.INTERNAL_SERVER_ERROR);
       }
       // 更新当前 smile_test 的 patient_uuid
-      const updated = await this.smileTestService.updateByUuid(smile_uuid, { patient_uuid: patient.uuid as string });
+      const updated = await this.smileTestService.updateByUuidWithoutExpiryCheck(smile_uuid, {
+        patient_uuid: patient.uuid as string,
+      });
       return { success: true, data: { patient, smileTest: updated } };
     } catch (error) {
       throw new HttpException(

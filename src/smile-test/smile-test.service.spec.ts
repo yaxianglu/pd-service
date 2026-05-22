@@ -221,24 +221,24 @@ describe('SmileTestService', () => {
     }));
   });
 
-  it('keeps smile test links writable when they are less than two years old', async () => {
-    const createdAt = new Date(Date.now() - (180 * 24 * 60 * 60 * 1000));
+  it('keeps smile test links writable when they are less than seven days old', async () => {
+    const createdAt = new Date(Date.now() - (3 * 24 * 60 * 60 * 1000));
     jest.spyOn(service, 'findByUuid').mockResolvedValue({
       uuid: 'recent-smile',
       created_at: createdAt,
-      full_name: '近两年内用户',
+      full_name: '七天内用户',
     } as any);
     smileTestRepo.save.mockImplementation(async (entity) => entity);
 
     await expect(service.saveOrUpdateByUuid('recent-smile', {
-      full_name: '近两年内用户-更新',
+      full_name: '七天内用户-更新',
     } as any)).resolves.toEqual(expect.objectContaining({
       uuid: 'recent-smile',
-      full_name: '近两年内用户-更新',
+      full_name: '七天内用户-更新',
     }));
   });
 
-  it('marks uuid as expired when the smile test was created more than two years ago', async () => {
+  it('marks uuid as expired when the smile test was created more than seven days ago', async () => {
     const createdAt = new Date('2026-05-01T09:00:00Z');
     jest.spyOn(service, 'findByUuid').mockResolvedValue({
       uuid: 'expired-smile',
@@ -276,6 +276,26 @@ describe('SmileTestService', () => {
         message: SMILE_TEST_UUID_EXPIRED_MESSAGE,
       }),
     });
+  });
+
+  it('allows backend binding updates after the uuid has expired', async () => {
+    const createdAt = new Date(Date.now() - ((SMILE_TEST_UUID_EXPIRATION_DAYS + 1) * 24 * 60 * 60 * 1000));
+    const existing = {
+      uuid: 'expired-smile-for-binding',
+      created_at: createdAt,
+      patient_uuid: null,
+      full_name: '旧链接用户',
+    };
+
+    jest.spyOn(service, 'findByUuid').mockResolvedValue(existing as any);
+    smileTestRepo.save.mockImplementation(async (entity) => entity);
+
+    await expect(service.updateByUuidWithoutExpiryCheck('expired-smile-for-binding', {
+      patient_uuid: 'patient-uuid-1',
+    })).resolves.toEqual(expect.objectContaining({
+      uuid: 'expired-smile-for-binding',
+      patient_uuid: 'patient-uuid-1',
+    }));
   });
 
   it('still creates a new smile test when uuid does not exist yet', async () => {

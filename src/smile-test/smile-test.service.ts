@@ -75,13 +75,12 @@ export interface SmileTestListResult {
   total: number;
 }
 
-export const SMILE_TEST_UUID_EXPIRATION_YEARS = 2;
-export const SMILE_TEST_UUID_EXPIRATION_DAYS = 365 * SMILE_TEST_UUID_EXPIRATION_YEARS;
+export const SMILE_TEST_UUID_EXPIRATION_DAYS = 7;
 export const SMILE_TEST_UUID_EXPIRATION_MS =
   SMILE_TEST_UUID_EXPIRATION_DAYS * 24 * 60 * 60 * 1000;
 export const SMILE_TEST_UUID_EXPIRED_ERROR_CODE = 'uuid_expired';
 export const SMILE_TEST_UUID_NOT_FOUND_ERROR_CODE = 'uuid_not_found';
-export const SMILE_TEST_UUID_EXPIRED_MESSAGE = `此微笑测试链接已超过 ${SMILE_TEST_UUID_EXPIRATION_YEARS} 年，请重新开始新的微笑测试`;
+export const SMILE_TEST_UUID_EXPIRED_MESSAGE = `此微笑测试链接已超过 ${SMILE_TEST_UUID_EXPIRATION_DAYS} 天，请重新开始新的微笑测试`;
 
 export interface SmileTestUuidStatus {
   uuid: string;
@@ -418,8 +417,19 @@ export class SmileTestService {
     }
 
     this.assertSmileTestWritable(existing);
-    Object.assign(existing, this.sanitizeSystemManagedFields(data as any));
-    return await this.smileTestRepository.save(existing);
+    return await this.saveUpdatedSmileTest(existing, data);
+  }
+
+  async updateByUuidWithoutExpiryCheck(
+    uuid: string,
+    data: Partial<SmileTestData>,
+  ): Promise<SmileTest | null> {
+    const existing = await this.findByUuid(uuid);
+    if (!existing) {
+      return null;
+    }
+
+    return await this.saveUpdatedSmileTest(existing, data);
   }
 
   async updateByTestId(testId: string, data: Partial<SmileTestData>): Promise<SmileTest | null> {
@@ -429,8 +439,7 @@ export class SmileTestService {
     }
 
     this.assertSmileTestWritable(existing);
-    Object.assign(existing, this.sanitizeSystemManagedFields(data as any));
-    return await this.smileTestRepository.save(existing);
+    return await this.saveUpdatedSmileTest(existing, data);
   }
 
   async saveOrUpdateByUuid(uuid: string, data: SmileTestData): Promise<SmileTest> {
@@ -446,6 +455,14 @@ export class SmileTestService {
         uuid: uuid
       });
     }
+  }
+
+  private async saveUpdatedSmileTest(
+    existing: SmileTest,
+    data: Partial<SmileTestData>,
+  ): Promise<SmileTest> {
+    Object.assign(existing, this.sanitizeSystemManagedFields(data as any));
+    return await this.smileTestRepository.save(existing);
   }
 
   async deleteByUuid(uuid: string): Promise<boolean> {
