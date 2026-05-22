@@ -1,6 +1,7 @@
 import { Brackets } from 'typeorm';
 import {
   SMILE_TEST_UUID_EXPIRATION_DAYS,
+  SMILE_TEST_UUID_EXPIRED_MESSAGE,
   SmileTestService,
 } from './smile-test.service';
 
@@ -176,12 +177,12 @@ describe('SmileTestService', () => {
   });
 
   it('does not allow clients to overwrite smile test created_at when updating by uuid', async () => {
-    const originalCreatedAt = new Date('2026-05-07T17:16:00Z');
+    const originalCreatedAt = new Date(Date.now() - (24 * 60 * 60 * 1000));
     const forgedCreatedAt = new Date('2025-12-15T22:54:01Z');
     const existing = {
       uuid: 'smile-immutable-created-at',
       created_at: originalCreatedAt,
-      updated_at: new Date('2026-05-07T17:16:00Z'),
+      updated_at: originalCreatedAt,
       full_name: '龔達鈞',
     };
 
@@ -220,7 +221,24 @@ describe('SmileTestService', () => {
     }));
   });
 
-  it('marks uuid as expired when the smile test was created more than 7 days ago', async () => {
+  it('keeps smile test links writable when they are less than two years old', async () => {
+    const createdAt = new Date(Date.now() - (180 * 24 * 60 * 60 * 1000));
+    jest.spyOn(service, 'findByUuid').mockResolvedValue({
+      uuid: 'recent-smile',
+      created_at: createdAt,
+      full_name: '近两年内用户',
+    } as any);
+    smileTestRepo.save.mockImplementation(async (entity) => entity);
+
+    await expect(service.saveOrUpdateByUuid('recent-smile', {
+      full_name: '近两年内用户-更新',
+    } as any)).resolves.toEqual(expect.objectContaining({
+      uuid: 'recent-smile',
+      full_name: '近两年内用户-更新',
+    }));
+  });
+
+  it('marks uuid as expired when the smile test was created more than two years ago', async () => {
     const createdAt = new Date('2026-05-01T09:00:00Z');
     jest.spyOn(service, 'findByUuid').mockResolvedValue({
       uuid: 'expired-smile',
@@ -243,7 +261,7 @@ describe('SmileTestService', () => {
   });
 
   it('rejects updating an existing smile test when the uuid has expired', async () => {
-    const createdAt = new Date('2026-05-01T09:00:00Z');
+    const createdAt = new Date(Date.now() - ((SMILE_TEST_UUID_EXPIRATION_DAYS + 1) * 24 * 60 * 60 * 1000));
     jest.spyOn(service, 'findByUuid').mockResolvedValue({
       uuid: 'expired-smile',
       created_at: createdAt,
@@ -255,6 +273,7 @@ describe('SmileTestService', () => {
     } as any)).rejects.toMatchObject({
       response: expect.objectContaining({
         error_code: 'uuid_expired',
+        message: SMILE_TEST_UUID_EXPIRED_MESSAGE,
       }),
     });
   });
