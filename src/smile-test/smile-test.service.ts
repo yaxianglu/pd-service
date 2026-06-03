@@ -1,4 +1,4 @@
-import { GoneException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, Repository } from 'typeorm';
 import { SmileTest } from '../entities/smile-test.entity';
@@ -129,10 +129,14 @@ export class SmileTestService {
   ): SmileTestUuidStatus {
     const createdAt = smileTest?.created_at ? new Date(smileTest.created_at) : null;
     const hasValidCreatedAt = createdAt && !Number.isNaN(createdAt.getTime());
-    const expiresAt = hasValidCreatedAt
-      ? new Date(createdAt.getTime() + SMILE_TEST_UUID_EXPIRATION_MS)
-      : null;
-    const expired = Boolean(expiresAt && now.getTime() > expiresAt.getTime());
+    // Temporarily disable smile test expiration gating. Keep the old calculation
+    // commented here so we can restore the time limit quickly if needed later.
+    // const expiresAt = hasValidCreatedAt
+    //   ? new Date(createdAt.getTime() + SMILE_TEST_UUID_EXPIRATION_MS)
+    //   : null;
+    const expiresAt = null;
+    // const expired = Boolean(expiresAt && now.getTime() > expiresAt.getTime());
+    const expired = false;
 
     return {
       uuid,
@@ -155,14 +159,15 @@ export class SmileTestService {
     now: Date = new Date(),
   ): SmileTestUuidStatus {
     const status = this.buildUuidStatus(smileTest.uuid, smileTest, now);
-    if (status.expired) {
-      throw new GoneException({
-        success: false,
-        message: SMILE_TEST_UUID_EXPIRED_MESSAGE,
-        error_code: SMILE_TEST_UUID_EXPIRED_ERROR_CODE,
-        data: status,
-      });
-    }
+    // Temporarily disable write blocking by smile test age.
+    // if (status.expired) {
+    //   throw new GoneException({
+    //     success: false,
+    //     message: SMILE_TEST_UUID_EXPIRED_MESSAGE,
+    //     error_code: SMILE_TEST_UUID_EXPIRED_ERROR_CODE,
+    //     data: status,
+    //   });
+    // }
     return status;
   }
 

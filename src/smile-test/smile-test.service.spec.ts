@@ -1,7 +1,6 @@
 import { Brackets } from 'typeorm';
 import {
   SMILE_TEST_UUID_EXPIRATION_DAYS,
-  SMILE_TEST_UUID_EXPIRED_MESSAGE,
   SmileTestService,
 } from './smile-test.service';
 
@@ -238,7 +237,7 @@ describe('SmileTestService', () => {
     }));
   });
 
-  it('marks uuid as expired when the smile test was created more than seven days ago', async () => {
+  it('keeps uuid writable when the smile test was created more than seven days ago because the time limit is disabled', async () => {
     const createdAt = new Date('2026-05-01T09:00:00Z');
     jest.spyOn(service, 'findByUuid').mockResolvedValue({
       uuid: 'expired-smile',
@@ -253,14 +252,14 @@ describe('SmileTestService', () => {
     expect(result).toEqual(expect.objectContaining({
       uuid: 'expired-smile',
       exists: true,
-      expired: true,
-      can_write: false,
-      code: 'uuid_expired',
+      expired: false,
+      can_write: true,
+      code: 'uuid_valid',
       expiration_days: SMILE_TEST_UUID_EXPIRATION_DAYS,
     }));
   });
 
-  it('rejects updating an existing smile test when the uuid has expired', async () => {
+  it('allows updating an existing smile test even when it was created more than seven days ago', async () => {
     const createdAt = new Date(Date.now() - ((SMILE_TEST_UUID_EXPIRATION_DAYS + 1) * 24 * 60 * 60 * 1000));
     jest.spyOn(service, 'findByUuid').mockResolvedValue({
       uuid: 'expired-smile',
@@ -268,14 +267,14 @@ describe('SmileTestService', () => {
       full_name: '旧链接用户',
     } as any);
 
+    smileTestRepo.save.mockImplementation(async (entity) => entity);
+
     await expect(service.saveOrUpdateByUuid('expired-smile', {
       full_name: '新名字',
-    } as any)).rejects.toMatchObject({
-      response: expect.objectContaining({
-        error_code: 'uuid_expired',
-        message: SMILE_TEST_UUID_EXPIRED_MESSAGE,
-      }),
-    });
+    } as any)).resolves.toEqual(expect.objectContaining({
+      uuid: 'expired-smile',
+      full_name: '新名字',
+    }));
   });
 
   it('allows backend binding updates after the uuid has expired', async () => {
