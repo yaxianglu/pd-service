@@ -3,6 +3,10 @@ import {
   SMILE_TEST_UUID_EXPIRED_ERROR_CODE,
   SMILE_TEST_UUID_EXPIRED_MESSAGE,
   SMILE_TEST_UUID_NOT_FOUND_ERROR_CODE,
+  SMILE_TEST_UUID_INACTIVE_ERROR_CODE,
+  SMILE_TEST_UUID_INACTIVE_MESSAGE,
+  SMILE_TEST_UUID_COMPLETED_ERROR_CODE,
+  SMILE_TEST_UUID_COMPLETED_MESSAGE,
   SmileTestService,
   SmileTestData,
   SmileTestListFilters,
@@ -175,11 +179,19 @@ export class SmileTestController {
   async getSmileTestByUuid(@Param('uuid') uuid: string) {
     try {
       const result = await this.smileTestService.findByUuidWithRelations(uuid);
-      
+
       if (!result) {
         return {
           success: false,
           message: 'UUID不存在或已失效'
+        };
+      }
+
+      if (result.smileTest.test_status === 'completed') {
+        return {
+          success: false,
+          error_code: SMILE_TEST_UUID_COMPLETED_ERROR_CODE,
+          message: SMILE_TEST_UUID_COMPLETED_MESSAGE,
         };
       }
 
@@ -821,6 +833,24 @@ export class SmileTestController {
         };
       }
 
+      if (status.completed) {
+        return {
+          success: false,
+          error_code: SMILE_TEST_UUID_COMPLETED_ERROR_CODE,
+          data: { ...status, test_id: smileTest.test_id, test_status: smileTest.test_status },
+          message: SMILE_TEST_UUID_COMPLETED_MESSAGE,
+        };
+      }
+
+      if (status.inactive) {
+        return {
+          success: false,
+          error_code: SMILE_TEST_UUID_INACTIVE_ERROR_CODE,
+          data: { ...status, test_id: smileTest.test_id, test_status: smileTest.test_status },
+          message: SMILE_TEST_UUID_INACTIVE_MESSAGE,
+        };
+      }
+
       if (status.expired) {
         return {
           success: false,
@@ -858,6 +888,17 @@ export class SmileTestController {
         HttpStatus.INTERNAL_SERVER_ERROR
       );
     }
+  }
+
+  @Post('uuid/:uuid/touch')
+  async touchUuid(@Param('uuid') uuid: string) {
+    const status = await this.smileTestService.touchActivity(uuid);
+    return {
+      success: status.exists && status.can_write,
+      error_code: status.can_write ? undefined : status.code,
+      data: status,
+      message: '活动时间已更新',
+    };
   }
 
   @Get('test-id/:testId')
