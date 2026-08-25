@@ -99,13 +99,17 @@ export class SmileTest {
   @Column('decimal', { precision: 10, scale: 2, nullable: true })
   estimated_cost: number;
 
-  @Column('enum', { 
-    enum: ['pending', 'in_progress', 'completed', 'cancelled'], 
+  @Column('enum', {
+    enum: ['pending', 'in_progress', 'completed', 'cancelled'],
     default: 'pending',
-    nullable: true 
+    nullable: true
   })
   @Index()
   test_status: string;
+
+  @Column('datetime', { nullable: true })
+  @Index()
+  last_activity_at: Date;
 
   @Column('datetime', { nullable: true })
   @Index()

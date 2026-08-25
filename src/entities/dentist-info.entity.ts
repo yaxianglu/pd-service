@@ -33,6 +33,9 @@ export class DentistInfo {
   @Column({ type: 'varchar', length: 2550, nullable: true })
   address: string;
 
+  @Column({ type: 'varchar', length: 64, nullable: true })
+  course_time_slot: string;
+
   @Column({ type: 'text', nullable: true })
   special_notes: string;
 
