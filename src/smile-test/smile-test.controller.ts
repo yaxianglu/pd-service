@@ -892,13 +892,24 @@ export class SmileTestController {
 
   @Post('uuid/:uuid/touch')
   async touchUuid(@Param('uuid') uuid: string) {
-    const status = await this.smileTestService.touchActivity(uuid);
-    return {
-      success: status.exists && status.can_write,
-      error_code: status.can_write ? undefined : status.code,
-      data: status,
-      message: '活动时间已更新',
-    };
+    try {
+      const status = await this.smileTestService.touchActivity(uuid);
+      return {
+        success: status.exists && status.can_write,
+        error_code: status.can_write ? undefined : status.code,
+        data: status,
+        message: '活动时间已更新',
+      };
+    } catch (error) {
+      throw new HttpException(
+        {
+          success: false,
+          message: '更新活动时间失败',
+          error: error.message
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
   }
 
   @Get('test-id/:testId')
