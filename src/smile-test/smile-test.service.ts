@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, GoneException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, Repository } from 'typeorm';
 import { SmileTest } from '../entities/smile-test.entity';
@@ -82,15 +82,24 @@ export const SMILE_TEST_UUID_EXPIRED_ERROR_CODE = 'uuid_expired';
 export const SMILE_TEST_UUID_NOT_FOUND_ERROR_CODE = 'uuid_not_found';
 export const SMILE_TEST_UUID_EXPIRED_MESSAGE = `此微笑测试链接已超过 ${SMILE_TEST_UUID_EXPIRATION_DAYS} 天，请重新开始新的微笑测试`;
 
+export const SMILE_TEST_INACTIVITY_MS = 15 * 60 * 1000;
+export const SMILE_TEST_UUID_INACTIVE_ERROR_CODE = 'uuid_inactive';
+export const SMILE_TEST_UUID_COMPLETED_ERROR_CODE = 'uuid_completed';
+export const SMILE_TEST_UUID_INACTIVE_MESSAGE = '此微笑测试链接超过15分钟无操作，已失效，请使用新链接重新开始';
+export const SMILE_TEST_UUID_COMPLETED_MESSAGE = '此微笑测试已完成上传，链接已失效';
+
 export interface SmileTestUuidStatus {
   uuid: string;
   exists: boolean;
   expired: boolean;
+  inactive: boolean;
+  completed: boolean;
   can_write: boolean;
-  code: typeof SMILE_TEST_UUID_EXPIRED_ERROR_CODE | typeof SMILE_TEST_UUID_NOT_FOUND_ERROR_CODE | 'uuid_valid';
+  code: typeof SMILE_TEST_UUID_EXPIRED_ERROR_CODE | typeof SMILE_TEST_UUID_NOT_FOUND_ERROR_CODE | typeof SMILE_TEST_UUID_INACTIVE_ERROR_CODE | typeof SMILE_TEST_UUID_COMPLETED_ERROR_CODE | 'uuid_valid';
   created_at: Date | null;
   expires_at: Date | null;
   expiration_days: number;
+  last_activity_at: Date | null;
 }
 
 @Injectable()
@@ -124,55 +133,86 @@ export class SmileTestService {
 
   private buildUuidStatus(
     uuid: string,
-    smileTest: Pick<SmileTest, 'created_at'> | null,
+    smileTest: Pick<SmileTest, 'created_at' | 'last_activity_at' | 'test_status'> | null,
     now: Date = new Date(),
   ): SmileTestUuidStatus {
     const createdAt = smileTest?.created_at ? new Date(smileTest.created_at) : null;
     const hasValidCreatedAt = createdAt && !Number.isNaN(createdAt.getTime());
-    // Temporarily disable smile test expiration gating. Keep the old calculation
-    // commented here so we can restore the time limit quickly if needed later.
-    // const expiresAt = hasValidCreatedAt
-    //   ? new Date(createdAt.getTime() + SMILE_TEST_UUID_EXPIRATION_MS)
-    //   : null;
+
+    // 7天过期机制保持关闭
     const expiresAt = null;
-    // const expired = Boolean(expiresAt && now.getTime() > expiresAt.getTime());
     const expired = false;
+
+    const lastActivityAt = smileTest?.last_activity_at
+      ? new Date(smileTest.last_activity_at)
+      : null;
+    const hasValidActivity = lastActivityAt && !Number.isNaN(lastActivityAt.getTime());
+    const inactive = Boolean(
+      hasValidActivity && now.getTime() - lastActivityAt.getTime() > SMILE_TEST_INACTIVITY_MS,
+    );
+    const completed = smileTest?.test_status === 'completed';
+
+    const code = !smileTest
+      ? SMILE_TEST_UUID_NOT_FOUND_ERROR_CODE
+      : completed
+        ? SMILE_TEST_UUID_COMPLETED_ERROR_CODE
+        : inactive
+          ? SMILE_TEST_UUID_INACTIVE_ERROR_CODE
+          : expired
+            ? SMILE_TEST_UUID_EXPIRED_ERROR_CODE
+            : 'uuid_valid';
 
     return {
       uuid,
       exists: Boolean(smileTest),
       expired,
-      can_write: Boolean(smileTest) ? !expired : true,
-      code: !smileTest
-        ? SMILE_TEST_UUID_NOT_FOUND_ERROR_CODE
-        : expired
-          ? SMILE_TEST_UUID_EXPIRED_ERROR_CODE
-          : 'uuid_valid',
+      inactive,
+      completed,
+      can_write: Boolean(smileTest) ? !expired && !inactive && !completed : true,
+      code,
       created_at: hasValidCreatedAt ? createdAt : null,
       expires_at: expiresAt,
+      last_activity_at: hasValidActivity ? lastActivityAt : null,
       expiration_days: SMILE_TEST_UUID_EXPIRATION_DAYS,
     };
   }
 
   private assertSmileTestWritable(
-    smileTest: Pick<SmileTest, 'uuid' | 'created_at'>,
+    smileTest: Pick<SmileTest, 'uuid' | 'created_at' | 'last_activity_at' | 'test_status'>,
     now: Date = new Date(),
   ): SmileTestUuidStatus {
     const status = this.buildUuidStatus(smileTest.uuid, smileTest, now);
-    // Temporarily disable write blocking by smile test age.
-    // if (status.expired) {
-    //   throw new GoneException({
-    //     success: false,
-    //     message: SMILE_TEST_UUID_EXPIRED_MESSAGE,
-    //     error_code: SMILE_TEST_UUID_EXPIRED_ERROR_CODE,
-    //     data: status,
-    //   });
-    // }
+    if (status.completed) {
+      throw new GoneException({
+        success: false,
+        message: SMILE_TEST_UUID_COMPLETED_MESSAGE,
+        error_code: SMILE_TEST_UUID_COMPLETED_ERROR_CODE,
+        data: status,
+      });
+    }
+    if (status.inactive) {
+      throw new GoneException({
+        success: false,
+        message: SMILE_TEST_UUID_INACTIVE_MESSAGE,
+        error_code: SMILE_TEST_UUID_INACTIVE_ERROR_CODE,
+        data: status,
+      });
+    }
     return status;
   }
 
   async getUuidStatus(uuid: string, now: Date = new Date()): Promise<SmileTestUuidStatus> {
     const smileTest = await this.findByUuid(uuid);
+    return this.buildUuidStatus(uuid, smileTest, now);
+  }
+
+  async touchActivity(uuid: string, now: Date = new Date()): Promise<SmileTestUuidStatus> {
+    const smileTest = await this.findByUuid(uuid);
+    if (!smileTest) {
+      return this.buildUuidStatus(uuid, null, now);
+    }
+    smileTest.last_activity_at = now;
+    await this.smileTestRepository.save(smileTest);
     return this.buildUuidStatus(uuid, smileTest, now);
   }
 
@@ -453,6 +493,7 @@ export class SmileTestService {
     if (existing) {
       this.assertSmileTestWritable(existing);
       Object.assign(existing, safeData);
+      existing.last_activity_at = new Date();
       return await this.smileTestRepository.save(existing);
     } else {
       return await this.create({

@@ -317,4 +317,80 @@ describe('SmileTestService', () => {
       full_name: '新用户',
     }));
   });
+
+  describe('buildUuidStatus 失效判定', () => {
+    const now = new Date('2026-08-25T12:00:00Z');
+
+    it('15分钟内有活动 -> 可写、不失效', () => {
+      const status = (service as any).buildUuidStatus('u1', {
+        created_at: new Date('2026-08-25T11:00:00Z'),
+        last_activity_at: new Date('2026-08-25T11:50:00Z'), // 10 分钟前
+        test_status: 'in_progress',
+      }, now);
+      expect(status.inactive).toBe(false);
+      expect(status.completed).toBe(false);
+      expect(status.can_write).toBe(true);
+      expect(status.code).toBe('uuid_valid');
+    });
+
+    it('超过15分钟无活动 -> inactive、不可写', () => {
+      const status = (service as any).buildUuidStatus('u1', {
+        created_at: new Date('2026-08-25T11:00:00Z'),
+        last_activity_at: new Date('2026-08-25T11:44:00Z'), // 16 分钟前
+        test_status: 'in_progress',
+      }, now);
+      expect(status.inactive).toBe(true);
+      expect(status.can_write).toBe(false);
+      expect(status.code).toBe('uuid_inactive');
+    });
+
+    it('test_status=completed -> completed 优先于 inactive', () => {
+      const status = (service as any).buildUuidStatus('u1', {
+        created_at: new Date('2026-08-25T11:00:00Z'),
+        last_activity_at: new Date('2026-08-25T11:44:00Z'),
+        test_status: 'completed',
+      }, now);
+      expect(status.completed).toBe(true);
+      expect(status.can_write).toBe(false);
+      expect(status.code).toBe('uuid_completed');
+    });
+
+    it('无 last_activity_at -> 不因无活动判失效（新会话）', () => {
+      const status = (service as any).buildUuidStatus('u1', {
+        created_at: new Date('2026-08-25T11:00:00Z'),
+        last_activity_at: null,
+        test_status: 'pending',
+      }, now);
+      expect(status.inactive).toBe(false);
+      expect(status.can_write).toBe(true);
+    });
+  });
+
+  describe('touchActivity 与写入拦截', () => {
+    it('touchActivity 行存在 -> 写 last_activity_at 并返回可写状态', async () => {
+      const row = { uuid: 'u1', created_at: new Date(), last_activity_at: null, test_status: 'in_progress' };
+      smileTestRepo.findOne.mockResolvedValue(row);
+      smileTestRepo.save.mockImplementation(async (r: any) => r);
+
+      const status = await service.touchActivity('u1', new Date('2026-08-25T12:00:00Z'));
+
+      expect(smileTestRepo.save).toHaveBeenCalled();
+      expect(row.last_activity_at).toEqual(new Date('2026-08-25T12:00:00Z'));
+      expect(status.can_write).toBe(true);
+    });
+
+    it('touchActivity 行不存在 -> 返回 not_found、不 save', async () => {
+      smileTestRepo.findOne.mockResolvedValue(null);
+      const status = await service.touchActivity('nope');
+      expect(smileTestRepo.save).not.toHaveBeenCalled();
+      expect(status.code).toBe('uuid_not_found');
+    });
+
+    it('saveOrUpdateByUuid 对 completed 记录抛 GoneException', async () => {
+      smileTestRepo.findOne.mockResolvedValue({
+        uuid: 'u1', created_at: new Date(), last_activity_at: new Date(), test_status: 'completed',
+      });
+      await expect(service.saveOrUpdateByUuid('u1', { full_name: 'x' } as any)).rejects.toThrow();
+    });
+  });
 });
