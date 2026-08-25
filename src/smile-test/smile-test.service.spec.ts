@@ -386,6 +386,31 @@ describe('SmileTestService', () => {
       expect(status.code).toBe('uuid_not_found');
     });
 
+    it('touchActivity on an already-inactive row reports uuid_inactive and does NOT save', async () => {
+      const now = new Date('2026-08-25T12:00:00Z');
+      const sixteenMinutesAgo = new Date(now.getTime() - 16 * 60 * 1000);
+      const row = { uuid: 'u1', created_at: new Date('2026-08-25T11:00:00Z'), last_activity_at: sixteenMinutesAgo, test_status: 'in_progress' };
+      smileTestRepo.findOne.mockResolvedValue(row);
+
+      const status = await service.touchActivity('u1', now);
+
+      expect(status.code).toBe('uuid_inactive');
+      expect(status.can_write).toBe(false);
+      expect(smileTestRepo.save).not.toHaveBeenCalled();
+    });
+
+    it('touchActivity on a completed row reports uuid_completed and does NOT save', async () => {
+      const now = new Date('2026-08-25T12:00:00Z');
+      const row = { uuid: 'u1', created_at: new Date('2026-08-25T11:00:00Z'), last_activity_at: new Date('2026-08-25T11:55:00Z'), test_status: 'completed' };
+      smileTestRepo.findOne.mockResolvedValue(row);
+
+      const status = await service.touchActivity('u1', now);
+
+      expect(status.code).toBe('uuid_completed');
+      expect(status.can_write).toBe(false);
+      expect(smileTestRepo.save).not.toHaveBeenCalled();
+    });
+
     it('saveOrUpdateByUuid 对 completed 记录抛 GoneException', async () => {
       smileTestRepo.findOne.mockResolvedValue({
         uuid: 'u1', created_at: new Date(), last_activity_at: new Date(), test_status: 'completed',

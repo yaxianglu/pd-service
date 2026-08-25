@@ -211,6 +211,10 @@ export class SmileTestService {
     if (!smileTest) {
       return this.buildUuidStatus(uuid, null, now);
     }
+    const status = this.buildUuidStatus(uuid, smileTest, now);
+    if (!status.can_write) {
+      return status; // already inactive/completed — report, don't revive
+    }
     smileTest.last_activity_at = now;
     await this.smileTestRepository.save(smileTest);
     return this.buildUuidStatus(uuid, smileTest, now);
